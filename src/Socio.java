@@ -16,7 +16,7 @@ public class Socio {
 
     // Nuevos campos requeridos
     private Date fechaInscripcion;
-    private Date ultFechaPago;
+    private Date fechaVencimientoPlan; // fecha en que vence el plan
     private boolean activo;
     private String plan; // ejemplo: "Premium"
     private int planMeses; // duración en meses: 1,3,6,12
@@ -29,7 +29,7 @@ public class Socio {
     // Constructor ampliado con los nuevos campos
     public Socio(String nombre, String apellido, int dni, String membresia,
                  List<Clase> clasesInscriptas, CuentaBancaria cuenta,
-                 Date fechaInscripcion, Date ultFechaPago, boolean activo, String plan, int planMeses) {
+                 Date fechaInscripcion, Date fechaVencimientoPlan, boolean activo, String plan, int planMeses) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.dni = dni;
@@ -37,7 +37,7 @@ public class Socio {
         this.cuenta = cuenta;
         this.clasesInscriptas = crearListaInicial(clasesInscriptas);
         this.fechaInscripcion = fechaInscripcion != null ? fechaInscripcion : new Date();
-        this.ultFechaPago = ultFechaPago;
+        this.fechaVencimientoPlan = fechaVencimientoPlan != null ? fechaVencimientoPlan : this.fechaInscripcion;
         this.activo = activo;
         this.plan = plan != null ? plan : "";
         this.planMeses = planMeses;
@@ -66,8 +66,13 @@ public class Socio {
 
         if (cuenta.extraer(monto)) {
             cuentaGimnasio.depositar(monto);
-            // actualizar última fecha de pago y marcar activo
-            this.ultFechaPago = new Date();
+            // actualizar fecha de vencimiento del plan: sumar los meses contratados
+            Date ahora = new Date();
+            Date base = (fechaVencimientoPlan != null && fechaVencimientoPlan.after(ahora)) ? fechaVencimientoPlan : ahora;
+            java.util.Calendar cal = java.util.Calendar.getInstance();
+            cal.setTime(base);
+            if (planMeses > 0) cal.add(java.util.Calendar.MONTH, planMeses);
+            fechaVencimientoPlan = cal.getTime();
             this.activo = true;
             return true;
         }
@@ -139,25 +144,21 @@ public class Socio {
         this.fechaInscripcion = fechaInscripcion;
     }
 
-    public Date getUltFechaPago() {
-        return ultFechaPago;
+    public Date getFechaVencimientoPlan() {
+        return fechaVencimientoPlan;
     }
 
-    public void setUltFechaPago(Date ultFechaPago) {
-        this.ultFechaPago = ultFechaPago;
+    public void setFechaVencimientoPlan(Date fechaVencimientoPlan) {
+        this.fechaVencimientoPlan = fechaVencimientoPlan;
     }
 
     public boolean isActivo() {
-        // calcular estado real según ultFechaPago y planMeses
-        if (planMeses <= 0 || ultFechaPago == null) {
+        if (fechaVencimientoPlan == null) {
             this.activo = false;
             return false;
         }
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(ultFechaPago);
-        cal.add(Calendar.MONTH, planMeses);
-        Date vencimiento = cal.getTime();
-        boolean ahoraActivo = new Date().before(vencimiento) || new Date().equals(vencimiento);
+        Date ahora = new Date();
+        boolean ahoraActivo = !ahora.after(fechaVencimientoPlan); // ahora <= vencimiento
         this.activo = ahoraActivo;
         return ahoraActivo;
     }
@@ -182,10 +183,10 @@ public class Socio {
         this.planMeses = planMeses;
     }
 
-    public String getUltFechaPagoFormateada() {
-        if (ultFechaPago == null) return "N/A";
+    public String getFechaVencimientoFormateada() {
+        if (fechaVencimientoPlan == null) return "N/A";
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        return sdf.format(ultFechaPago);
+        return sdf.format(fechaVencimientoPlan);
     }
 
     private List<Clase> crearListaInicial(List<Clase> clases) {

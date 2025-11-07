@@ -66,31 +66,101 @@ public class Gimnasio {
     public void agregarEmpleado(Empleado e) {
         if (e != null && !empleados.contains(e)) {
             empleados.add(e);
+            // registrar acción
+            Registro registro = new Registro(
+                    registros.size() + 1,
+                    new java.util.Date(),
+                    "AGREGAR_EMPLEADO",
+                    "Se agregó empleado: " + e.getNombre() + " " + e.getApellido(),
+                    0,
+                    null,
+                    e,
+                    null
+            );
+            registros.add(registro);
         }
     }
 
     public void eliminarEmpleado(Empleado e) {
-        empleados.remove(e);
+        if (e != null && empleados.remove(e)) {
+            Registro registro = new Registro(
+                    registros.size() + 1,
+                    new java.util.Date(),
+                    "ELIMINAR_EMPLEADO",
+                    "Se eliminó empleado: " + e.getNombre() + " " + e.getApellido(),
+                    0,
+                    null,
+                    e,
+                    null
+            );
+            registros.add(registro);
+        }
     }
 
     public void agregarSocio(Socio s) {
         if (s != null && !socios.contains(s)) {
             socios.add(s);
+            Registro registro = new Registro(
+                    registros.size() + 1,
+                    new java.util.Date(),
+                    "AGREGAR_SOCIO",
+                    "Se agregó socio: " + s.getNombre() + " " + s.getApellido(),
+                    0,
+                    s,
+                    null,
+                    null
+            );
+            registros.add(registro);
         }
     }
 
     public void eliminarSocio(Socio s) {
-        socios.remove(s);
+        if (s != null && socios.remove(s)) {
+            Registro registro = new Registro(
+                    registros.size() + 1,
+                    new java.util.Date(),
+                    "ELIMINAR_SOCIO",
+                    "Se eliminó socio: " + s.getNombre() + " " + s.getApellido(),
+                    0,
+                    s,
+                    null,
+                    null
+            );
+            registros.add(registro);
+        }
     }
 
     public void agregarClase(Clase c) {
         if (c != null && !clases.contains(c)) {
             clases.add(c);
+            Registro registro = new Registro(
+                    registros.size() + 1,
+                    new java.util.Date(),
+                    "AGREGAR_CLASE",
+                    "Se agregó clase: " + c.getNombre(),
+                    0,
+                    null,
+                    null,
+                    c
+            );
+            registros.add(registro);
         }
     }
 
     public void eliminarClase(Clase c) {
-        clases.remove(c);
+        if (c != null && clases.remove(c)) {
+            Registro registro = new Registro(
+                    registros.size() + 1,
+                    new java.util.Date(),
+                    "ELIMINAR_CLASE",
+                    "Se eliminó clase: " + c.getNombre(),
+                    0,
+                    null,
+                    null,
+                    c
+            );
+            registros.add(registro);
+        }
     }
 
     /**
@@ -227,15 +297,12 @@ public class Gimnasio {
                     menuClases();
                     break;
                 case "4":
-                    listarRegistros();
+                    menuCuentaBancaria();
                     break;
                 case "5":
-                    gestionarPagoSocio();
+                    listarRegistrosAcciones();
                     break;
                 case "6":
-                    pagarSueldosDesdeMenu();
-                    break;
-                case "7":
                     mostrarResumenFinanciero();
                     break;
                 case "0":
@@ -253,10 +320,9 @@ public class Gimnasio {
         "1 - Socios (Listar / Agregar / Eliminar)\n" +
         "2 - Empleados (Listar / Agregar / Eliminar)\n" +
         "3 - Clases (Listar / Agregar / Eliminar)\n" +
-        "4 - Listar registros\n" +
-        "5 - Registrar pago de socio\n" +
-        "6 - Pagar sueldos a empleados\n" +
-        "7 - Mostrar resumen del gimnasio\n" +
+        "4 - Cuenta bancaria\n" +
+        "5 - Registros\n" +
+        "6 - Mostrar resumen del gimnasio\n" +
         "0 - Salir";
     }
 
@@ -265,22 +331,16 @@ public class Gimnasio {
             JOptionPane.showMessageDialog(null, "No hay socios cargados en el sistema.");
             return;
         }
-
         StringBuilder detalleSocios = new StringBuilder("Socios inscriptos:\n");
         for (Socio socio : socios) {
-            boolean activo = socio.isActivo(); // esto actualizará el estado en el objeto
-            detalleSocios.append("- ")
-                    .append(socio.getNombre())
-                    .append(" ")
-                    .append(socio.getApellido())
-                    .append(" (DNI ")
-                    .append(socio.getDni())
-                    .append(") - Activo: ")
-                    .append(activo ? "Sí" : "No")
+            boolean activo = socio.isActivo(); // actualizar estado
+            detalleSocios.append("DNI: ").append(socio.getDni()).append(" - ")
+                    .append(socio.getNombre()).append(" ").append(socio.getApellido())
+                    .append(" - Activo: ").append(activo ? "Sí" : "No")
                     .append(" - Plan: ")
                     .append(socio.getPlan() != null && !socio.getPlan().isEmpty() ? socio.getPlan() : "N/A")
-                    .append(" - Último pago: ")
-                    .append(socio.getUltFechaPagoFormateada())
+                    .append(" - Vence: ")
+                    .append(socio.getFechaVencimientoFormateada())
                     .append("\n");
         }
 
@@ -315,19 +375,24 @@ public class Gimnasio {
                 JOptionPane.showMessageDialog(null, "No se encontró un socio con ese DNI.");
                 return;
             }
+            // Opciones fijas de plan y precio
+            String[] opcionesPago = new String[]{
+                    "1 mes - $35000",
+                    "3 meses - $100000",
+                    "6 meses - $550000",
+                    "12 meses - $1100000"
+            };
+            String elegidoPago = (String) JOptionPane.showInputDialog(null, "Seleccione el plan a comprar:",
+                    "Pago de cuota", JOptionPane.QUESTION_MESSAGE, null, opcionesPago, opcionesPago[0]);
+            if (elegidoPago == null) return;
 
-            String montoTexto = JOptionPane.showInputDialog(null, "Ingrese el monto a cobrar:");
-            if (montoTexto == null) {
-                return;
-            }
+            int meses = 1;
+            double monto = 35000;
+            if (elegidoPago.startsWith("1 ")) { meses = 1; monto = 35000; }
+            else if (elegidoPago.startsWith("3 ")) { meses = 3; monto = 100000; }
+            else if (elegidoPago.startsWith("6 ")) { meses = 6; monto = 550000; }
+            else if (elegidoPago.startsWith("12")) { meses = 12; monto = 1100000; }
 
-            double monto = Double.parseDouble(montoTexto);
-            // Preguntar duración del plan en meses (1,3,6,12)
-            String[] opciones = new String[]{"1","3","6","12"};
-            String elegido = (String) JOptionPane.showInputDialog(null, "Seleccione duración del plan (meses):",
-                    "Duración del plan", JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
-            if (elegido == null) return;
-            int meses = Integer.parseInt(elegido);
             socio.setPlanMeses(meses);
             socio.setPlan(meses + " meses");
 
@@ -343,6 +408,57 @@ public class Gimnasio {
         }
     }
 
+    // --- Menú específico para acciones sobre la cuenta bancaria ---
+    private void menuCuentaBancaria() {
+        boolean volver = false;
+        while (!volver) {
+            String opcion = JOptionPane.showInputDialog(null,
+                    "Cuenta bancaria - seleccione:\n1 - Registrar pago de socio\n2 - Pagar sueldo a empleado (por DNI)\n3 - Ver monto de la cuenta corriente\n0 - Volver",
+                    "Menú Cuenta Bancaria",
+                    JOptionPane.QUESTION_MESSAGE);
+            if (opcion == null) return;
+            switch (opcion) {
+                case "1":
+                    gestionarPagoSocio();
+                    break;
+                case "2":
+                    pagarSueldoEmpleadoDesdeMenu();
+                    break;
+                case "3":
+                    if (cuenta != null) JOptionPane.showMessageDialog(null, "Saldo actual de la cuenta: $" + cuenta.getSaldo());
+                    else JOptionPane.showMessageDialog(null, "No hay cuenta bancaria asignada.");
+                    break;
+                case "0":
+                    volver = true;
+                    break;
+                default:
+                    JOptionPane.showMessageDialog(null, "Opción inválida.");
+            }
+        }
+    }
+
+    private void pagarSueldoEmpleadoDesdeMenu() {
+        try {
+            String dniTxt = JOptionPane.showInputDialog(null, "Ingrese DNI del empleado a pagar sueldo:");
+            if (dniTxt == null) return;
+            int dni = Integer.parseInt(dniTxt);
+            Empleado e = buscarEmpleadoPorDni(dni);
+            if (e == null) {
+                JOptionPane.showMessageDialog(null, "No se encontró empleado con DNI " + dni);
+                return;
+            }
+            if (cuenta == null) {
+                JOptionPane.showMessageDialog(null, "No hay cuenta bancaria del gimnasio asignada.");
+                return;
+            }
+            boolean pagado = e.cobrarSueldo(cuenta);
+            if (pagado) JOptionPane.showMessageDialog(null, "Sueldo pagado a " + e.getNombre() + " " + e.getApellido());
+            else JOptionPane.showMessageDialog(null, "No se pudo pagar el sueldo. Fondos insuficientes.");
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(null, "DNI inválido.");
+        }
+    }
+
     private void mostrarResumenFinanciero() {
         StringBuilder resumen = new StringBuilder();
         resumen.append(toString()).append('\n');
@@ -354,6 +470,21 @@ public class Gimnasio {
         }
 
         JOptionPane.showMessageDialog(null, resumen.toString());
+    }
+
+    private void listarRegistrosAcciones() {
+        if (registros.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "No hay registros disponibles.");
+            return;
+        }
+        StringBuilder sb = new StringBuilder("Registros (Agregar / Eliminar) de Socios, Empleados y Clases:\n");
+        for (Registro r : registros) {
+            String tipo = r.getTipo();
+            if (tipo != null && (tipo.startsWith("AGREGAR_") || tipo.startsWith("ELIMINAR_"))) {
+                sb.append(r.toString()).append("\n");
+            }
+        }
+        JOptionPane.showMessageDialog(null, sb.toString());
     }
 
     private Socio buscarSocioPorDni(int dni) {
@@ -435,16 +566,41 @@ public class Gimnasio {
             JOptionPane.showMessageDialog(null, "No hay empleados cargados.");
             return;
         }
-        StringBuilder sb = new StringBuilder("Empleados:\n");
+        StringBuilder sb = new StringBuilder();
+        sb.append("Entrenadores:\n");
+        boolean anyEntr = false;
         for (Empleado e : empleados) {
-            sb.append("- ").append(e.toString()).append("\n");
+            if (e instanceof Entrenador) {
+                Entrenador ent = (Entrenador) e;
+                sb.append("DNI: ").append(ent.getDni()).append(" - ")
+                        .append(ent.getNombre()).append(" ").append(ent.getApellido())
+                        .append(" - Esp: ").append(ent.getEspecialidad() != null ? ent.getEspecialidad() : "N/A")
+                        .append("\n");
+                anyEntr = true;
+            }
         }
+        if (!anyEntr) sb.append("(ninguno)\n");
+        sb.append("\nPersonal de limpieza:\n");
+        boolean anyLimp = false;
+        for (Empleado e : empleados) {
+            if (e instanceof Limpieza) {
+                Limpieza limp = (Limpieza) e;
+                sb.append("DNI: ").append(limp.getDni()).append(" - ")
+                        .append(limp.getNombre()).append(" ").append(limp.getApellido())
+                        .append(" - Horario: ").append(limp.getHorarioTrabajo() != null ? limp.getHorarioTrabajo() : "N/A")
+                        .append(" - Sector: ").append(limp.getSector() != null ? limp.getSector() : "N/A")
+                        .append("\n");
+                anyLimp = true;
+            }
+        }
+        if (!anyLimp) sb.append("(ninguno)\n");
         JOptionPane.showMessageDialog(null, sb.toString());
     }
 
     private void agregarEmpleadoDesdeMenu() {
         try {
-            String tipo = JOptionPane.showInputDialog(null, "Tipo de empleado (Entrenador/Limpieza):");
+            String[] tipos = new String[]{"Entrenador", "Limpieza"};
+            String tipo = (String) JOptionPane.showInputDialog(null, "Tipo de empleado:", "Tipo", JOptionPane.QUESTION_MESSAGE, null, tipos, tipos[0]);
             if (tipo == null) return;
             String nombre = JOptionPane.showInputDialog(null, "Nombre:");
             if (nombre == null) return;
@@ -458,16 +614,36 @@ public class Gimnasio {
             String sueldoTxt = JOptionPane.showInputDialog(null, "Sueldo:");
             double sueldo = 0;
             if (sueldoTxt != null && !sueldoTxt.isEmpty()) sueldo = Double.parseDouble(sueldoTxt);
-
             if (tipo.equalsIgnoreCase("Entrenador")) {
                 String especialidad = JOptionPane.showInputDialog(null, "Especialidad:");
-                Entrenador ent = new Entrenador(nombre, apellido, dni, sexo, new java.util.Date(), sueldo, especialidad, null);
+                String fechaTxt = JOptionPane.showInputDialog(null, "Fecha de nacimiento (dd/MM/yyyy) (opcional):");
+                java.util.Date fechaNac = new java.util.Date();
+                if (fechaTxt != null && !fechaTxt.trim().isEmpty()) {
+                    try {
+                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+                        fechaNac = sdf.parse(fechaTxt);
+                    } catch (Exception ex) {
+                        // usar fecha actual si parse falla
+                        fechaNac = new java.util.Date();
+                    }
+                }
+                Entrenador ent = new Entrenador(nombre, apellido, dni, sexo, fechaNac, sueldo, especialidad, null);
                 agregarEmpleado(ent);
                 JOptionPane.showMessageDialog(null, "Entrenador agregado: " + ent.getNombre());
             } else {
+                String fechaTxt = JOptionPane.showInputDialog(null, "Fecha de nacimiento (dd/MM/yyyy) (opcional):");
+                java.util.Date fechaNac = new java.util.Date();
+                if (fechaTxt != null && !fechaTxt.trim().isEmpty()) {
+                    try {
+                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+                        fechaNac = sdf.parse(fechaTxt);
+                    } catch (Exception ex) {
+                        fechaNac = new java.util.Date();
+                    }
+                }
                 String horario = JOptionPane.showInputDialog(null, "Horario de trabajo (ej. 08:00-12:00):");
                 String sector = JOptionPane.showInputDialog(null, "Sector:");
-                Limpieza limp = new Limpieza(nombre, apellido, dni, sexo, new java.util.Date(), sueldo, horario, sector);
+                Limpieza limp = new Limpieza(nombre, apellido, dni, sexo, fechaNac, sueldo, horario, sector);
                 agregarEmpleado(limp);
                 JOptionPane.showMessageDialog(null, "Personal de limpieza agregado: " + limp.getNombre());
             }
@@ -524,10 +700,36 @@ public class Gimnasio {
                     // ignorar
                 }
             }
+            // El DNI del entrenador NO es opcional: pedir hasta obtener un Entrenador válido o cancelar
+            while (true) {
+                String dniReq = JOptionPane.showInputDialog(null, "DNI del entrenador (obligatorio, cancelar para abortar):");
+                if (dniReq == null) {
+                    // el usuario canceló la operación de creación de clase
+                    JOptionPane.showMessageDialog(null, "Creación de clase cancelada.");
+                    return;
+                }
+                try {
+                    int dniEntr = Integer.parseInt(dniReq.trim());
+                    Empleado e = buscarEmpleadoPorDni(dniEntr);
+                    if (e == null) {
+                        JOptionPane.showMessageDialog(null, "No se encontró empleado con DNI " + dniEntr + ". Ingrese un DNI válido.");
+                        continue;
+                    }
+                    if (!(e instanceof Entrenador)) {
+                        JOptionPane.showMessageDialog(null, "El DNI indicado no corresponde a un Entrenador. Ingrese el DNI de un entrenador.");
+                        continue;
+                    }
+                    ent = (Entrenador) e;
+                    break;
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "DNI inválido. Intente nuevamente.");
+                }
+            }
 
             Clase c = new Clase(nombreClase, horario, cupo, ent, null);
             agregarClase(c);
-            if (ent != null) ent.asignarClase(c);
+            // actualizar lista de clases asignadas del entrenador
+            ent.asignarClase(c);
             JOptionPane.showMessageDialog(null, "Clase agregada: " + nombreClase);
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(null, "Cupo inválido.");
@@ -546,22 +748,14 @@ public class Gimnasio {
         JOptionPane.showMessageDialog(null, "Clase eliminada: " + nombreClase);
     }
 
-    private void listarRegistros() {
-        if (registros.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "No hay registros disponibles.");
-            return;
-        }
-        StringBuilder sb = new StringBuilder("Registros:\n");
-        for (Registro r : registros) sb.append(r.toString()).append("\n");
-        JOptionPane.showMessageDialog(null, sb.toString());
-    }
+    
 
     // --- Menús por entidad ---
     private void menuSocios() {
         boolean volver = false;
         while (!volver) {
             String opcion = JOptionPane.showInputDialog(null,
-                    "Socios - seleccione:\n1 - Listar socios\n2 - Agregar socio\n3 - Eliminar socio\n0 - Volver",
+                    "Socios - seleccione:\n1 - Listar socios\n2 - Agregar socio\n3 - Eliminar socio (por DNI)\n4 - Modificar socio (por DNI)\n0 - Volver",
                     "Menú Socios",
                     JOptionPane.QUESTION_MESSAGE);
             if (opcion == null) return;
@@ -573,7 +767,10 @@ public class Gimnasio {
                     agregarSocioDesdeMenu();
                     break;
                 case "3":
-                    eliminarSocioSeleccion();
+                    eliminarSocioPorDni();
+                    break;
+                case "4":
+                    modificarSocioPorDni();
                     break;
                 case "0":
                     volver = true;
@@ -588,7 +785,7 @@ public class Gimnasio {
         boolean volver = false;
         while (!volver) {
             String opcion = JOptionPane.showInputDialog(null,
-                    "Empleados - seleccione:\n1 - Listar empleados\n2 - Agregar empleado\n3 - Eliminar empleado\n0 - Volver",
+                    "Empleados - seleccione:\n1 - Listar empleados\n2 - Agregar empleado\n3 - Eliminar empleado (por DNI)\n4 - Modificar empleado (por DNI)\n0 - Volver",
                     "Menú Empleados",
                     JOptionPane.QUESTION_MESSAGE);
             if (opcion == null) return;
@@ -600,7 +797,10 @@ public class Gimnasio {
                     agregarEmpleadoDesdeMenu();
                     break;
                 case "3":
-                    eliminarEmpleadoSeleccion();
+                    eliminarEmpleadoPorDni();
+                    break;
+                case "4":
+                    modificarEmpleadoPorDni();
                     break;
                 case "0":
                     volver = true;
@@ -685,6 +885,117 @@ public class Gimnasio {
         if (confirm == JOptionPane.YES_OPTION) {
             eliminarEmpleado(e);
             JOptionPane.showMessageDialog(null, "Empleado eliminado.");
+        }
+    }
+
+    // --- Eliminación/Modificación por DNI ---
+    private void eliminarSocioPorDni() {
+        try {
+            String dniTxt = JOptionPane.showInputDialog(null, "Ingrese DNI del socio a eliminar:");
+            if (dniTxt == null) return;
+            int dni = Integer.parseInt(dniTxt);
+            Socio s = buscarSocioPorDni(dni);
+            if (s == null) {
+                JOptionPane.showMessageDialog(null, "No se encontró socio con DNI " + dni);
+                return;
+            }
+            int confirm = JOptionPane.showConfirmDialog(null, "¿Confirma eliminar a " + s.getNombre() + " " + s.getApellido() + "?",
+                    "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                eliminarSocio(s);
+                JOptionPane.showMessageDialog(null, "Socio eliminado.");
+            }
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(null, "DNI inválido.");
+        }
+    }
+
+    private void modificarSocioPorDni() {
+        try {
+            String dniTxt = JOptionPane.showInputDialog(null, "Ingrese DNI del socio a modificar:");
+            if (dniTxt == null) return;
+            int dni = Integer.parseInt(dniTxt);
+            Socio s = buscarSocioPorDni(dni);
+            if (s == null) {
+                JOptionPane.showMessageDialog(null, "No se encontró socio con DNI " + dni);
+                return;
+            }
+            String nombre = JOptionPane.showInputDialog(null, "Nombre:", s.getNombre());
+            if (nombre != null && !nombre.trim().isEmpty()) s.setNombre(nombre);
+            String apellido = JOptionPane.showInputDialog(null, "Apellido:", s.getApellido());
+            if (apellido != null && !apellido.trim().isEmpty()) s.setApellido(apellido);
+            String nroCuenta = JOptionPane.showInputDialog(null, "Nro de cuenta bancaria:", s.getCuenta() != null ? s.getCuenta().getNroCuenta() : "");
+            if (nroCuenta != null && !nroCuenta.trim().isEmpty()) {
+                if (s.getCuenta() == null) s.setCuenta(new CuentaBancaria(nroCuenta, 0, s.getNombre() + " " + s.getApellido()));
+                else s.getCuenta().setNroCuenta(nroCuenta);
+            }
+            String[] opcionesPlan = new String[]{"1","3","6","12"};
+            String elegidoPlan = (String) JOptionPane.showInputDialog(null, "Seleccione duración del plan (meses):",
+                    "Plan", JOptionPane.QUESTION_MESSAGE, null, opcionesPlan, String.valueOf(s.getPlanMeses() > 0 ? s.getPlanMeses() : "1"));
+            if (elegidoPlan != null) {
+                try { int meses = Integer.parseInt(elegidoPlan); s.setPlanMeses(meses); s.setPlan(meses + " meses"); } catch (NumberFormatException ex) {}
+            }
+            JOptionPane.showMessageDialog(null, "Socio actualizado.");
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(null, "DNI inválido.");
+        }
+    }
+
+    private void eliminarEmpleadoPorDni() {
+        try {
+            String dniTxt = JOptionPane.showInputDialog(null, "Ingrese DNI del empleado a eliminar:");
+            if (dniTxt == null) return;
+            int dni = Integer.parseInt(dniTxt);
+            Empleado e = buscarEmpleadoPorDni(dni);
+            if (e == null) {
+                JOptionPane.showMessageDialog(null, "No se encontró empleado con DNI " + dni);
+                return;
+            }
+            int confirm = JOptionPane.showConfirmDialog(null, "¿Confirma eliminar a " + e.getNombre() + " " + e.getApellido() + "?",
+                    "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                eliminarEmpleado(e);
+                JOptionPane.showMessageDialog(null, "Empleado eliminado.");
+            }
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(null, "DNI inválido.");
+        }
+    }
+
+    private void modificarEmpleadoPorDni() {
+        try {
+            String dniTxt = JOptionPane.showInputDialog(null, "Ingrese DNI del empleado a modificar:");
+            if (dniTxt == null) return;
+            int dni = Integer.parseInt(dniTxt);
+            Empleado e = buscarEmpleadoPorDni(dni);
+            if (e == null) {
+                JOptionPane.showMessageDialog(null, "No se encontró empleado con DNI " + dni);
+                return;
+            }
+            String nombre = JOptionPane.showInputDialog(null, "Nombre:", e.getNombre());
+            if (nombre != null && !nombre.trim().isEmpty()) e.setNombre(nombre);
+            String apellido = JOptionPane.showInputDialog(null, "Apellido:", e.getApellido());
+            if (apellido != null && !apellido.trim().isEmpty()) e.setApellido(apellido);
+            String sexo = JOptionPane.showInputDialog(null, "Sexo (M/F):", e.getSexo());
+            if (sexo != null && !sexo.trim().isEmpty()) e.setSexo(sexo);
+            String sueldoTxt = JOptionPane.showInputDialog(null, "Sueldo:", String.valueOf(e.getSueldo()));
+            if (sueldoTxt != null && !sueldoTxt.isEmpty()) {
+                try { e.setSueldo(Double.parseDouble(sueldoTxt)); } catch (NumberFormatException ex) {}
+            }
+            if (e instanceof Entrenador) {
+                Entrenador ent = (Entrenador) e;
+                String especialidad = JOptionPane.showInputDialog(null, "Especialidad:", ent.getEspecialidad());
+                if (especialidad != null && !especialidad.trim().isEmpty()) ent.setEspecialidad(especialidad);
+            } else if (e instanceof Limpieza) {
+                Limpieza limp = (Limpieza) e;
+                String horario = JOptionPane.showInputDialog(null, "Horario de trabajo:", limp.getHorarioTrabajo());
+                if (horario != null && !horario.trim().isEmpty()) limp.setHorarioTrabajo(horario);
+                String sector = JOptionPane.showInputDialog(null, "Sector:", limp.getSector());
+                if (sector != null && !sector.trim().isEmpty()) limp.setSector(sector);
+            }
+            JOptionPane.showMessageDialog(null, "Empleado actualizado.");
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(null, "DNI inválido.");
         }
     }
 
