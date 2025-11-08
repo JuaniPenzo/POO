@@ -1,5 +1,11 @@
-import javax.swing.JOptionPane;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -15,6 +21,11 @@ public class Gimnasio {
     private List<Clase> clases;
     private List<Registro> registros;
     private CuentaBancaria cuenta;
+    // GUI components for the timetable
+    private JFrame mainFrame;
+    private JButton[][] gridButtons; // [turno][dia]
+    private final String[] diasSemana = new String[]{"Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"};
+    private final String[] turnos = new String[]{"Mañana","Tarde","Noche"};
 
     public Gimnasio(String nombre, int CUIT, String direccion, String provincia) {
         this.nombre = nombre;
@@ -47,7 +58,8 @@ public class Gimnasio {
         gimnasio.agregarEmpleado(entrenador1);
         gimnasio.agregarEmpleado(limpieza1);
 
-        Clase clase1 = new Clase("Funcional", "Lunes 10:00", 20, entrenador1, null);
+    // Clase demo en Lunes - Mañana para encajar con la grilla de turnos
+    Clase clase1 = new Clase("Funcional", "Lunes - Mañana", 20, entrenador1, null);
         entrenador1.asignarClase(clase1);
         gimnasio.agregarClase(clase1);
 
@@ -57,6 +69,9 @@ public class Gimnasio {
 
         gimnasio.registrarPagoSocio(socio1, 10000);
         gimnasio.pagarSueldos();
+
+    // Añadir datos adicionales para pruebas
+    gimnasio.seedDatosCompletos();
 
         return gimnasio;
     }
@@ -128,6 +143,104 @@ public class Gimnasio {
         }
     }
 
+    /**
+     * Popula el gimnasio con múltiples datos de prueba: entrenadores, personal de limpieza,
+     * socios, clases y algunos pagos/sueldos para generar movimientos en la cuenta.
+     */
+    private void seedDatosCompletos() {
+        // Nombres reales y creíbles para pruebas
+        String[] especialidades = new String[]{"Crossfit","Funcional","Aerobico","Hyorx","Musculacion","Zumba"};
+
+        // Entrenadores reales (nombre, apellido, dni, sexo, fechaNac, sueldo, especialidad)
+        Object[][] entrenadores = new Object[][]{
+                {"Federico","Álvarez",20123456,"M",50000, "Crossfit"},
+                {"Sofía","Morales",20234567,"F",48000, "Funcional"},
+                {"Valentina","López",20345678,"F",46000, "Zumba"},
+                {"Diego","Fernández",20456789,"M",52000, "Musculacion"},
+                {"Camila","Díaz",20567890,"F",45000, "Aerobico"},
+                {"Matías","Romero",20678901,"M",51000, "Hyorx"}
+        };
+        for (Object[] row : entrenadores) {
+            String nom = (String) row[0];
+            String ape = (String) row[1];
+            int dni = (int) row[2];
+            String sexo = (String) row[3];
+            double sueldo = ((Number)row[4]).doubleValue();
+            String esp = (String) row[5];
+            Entrenador ent = new Entrenador(nom, ape, dni, sexo, new Date(), sueldo, esp, null);
+            agregarEmpleado(ent);
+        }
+
+        // Personal de limpieza con nombres reales
+        String[][] limpiezas = new String[][]{
+                {"Ana","Ruiz","F"},
+                {"Laura","Medina","F"},
+                {"Paula","Castro","F"}
+        };
+        for (int i = 0; i < limpiezas.length; i++) {
+            String nom = limpiezas[i][0];
+            String ape = limpiezas[i][1];
+            String sexo = limpiezas[i][2];
+            Limpieza limp = new Limpieza(nom, ape, 30010 + i, sexo, new Date(), 26000, "08:00-12:00", "Sector " + (i+1));
+            agregarEmpleado(limp);
+        }
+
+        // Socios con nombres reales y cuentas
+        String[][] sociosDatos = new String[][]{
+                {"Martín","García","40123456"},
+                {"María","Rodríguez","40134567"},
+                {"Lucía","González","40145678"},
+                {"José","Martínez","40156789"},
+                {"Camila","Pérez","40167890"},
+                {"Lucas","Hernández","40178901"},
+                {"Ana","Sánchez","40189012"},
+                {"Fernando","Torres","40190123"},
+                {"Martina","Vargas","40201234"},
+                {"Bruno","Rossi","40212345"}
+        };
+        int idx = 0;
+        int[] opcionesMeses = new int[]{1,3,6,12};
+        for (String[] sdata : sociosDatos) {
+            String nom = sdata[0];
+            String ape = sdata[1];
+            int dni = Integer.parseInt(sdata[2]);
+            String nroCuenta = "AR" + dni;
+            CuentaBancaria cb = new CuentaBancaria(nroCuenta, 180000 + (idx * 5000), nom + " " + ape);
+            Socio s = new Socio(nom, ape, dni, "Estándar", null, cb);
+            int meses = opcionesMeses[idx % opcionesMeses.length];
+            s.setPlanMeses(meses);
+            s.setPlan(meses + " meses");
+            agregarSocio(s);
+            // registrar pago para la mayoría
+            if (idx < 9) registrarPagoSocio(s, 35000 * meses);
+            idx++;
+        }
+
+        // Crear algunas clases y asignar entrenadores según su especialidad
+        String[] dias = new String[]{"Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"};
+        int claseCount = 0;
+        for (String dia : dias) {
+            for (String turno : turnos) {
+                if (claseCount >= 8) break;
+                String tipo = especialidades[claseCount % especialidades.length];
+                Entrenador elegido = null;
+                for (Empleado e : empleados) if (e instanceof Entrenador) {
+                    Entrenador en = (Entrenador) e;
+                    if (en.getEspecialidad() != null && en.getEspecialidad().equalsIgnoreCase(tipo)) { elegido = en; break; }
+                }
+                if (elegido == null) continue;
+                Clase c = new Clase(tipo, dia + " - " + turno, 20, elegido, null);
+                agregarClase(c);
+                elegido.asignarClase(c);
+                claseCount++;
+            }
+            if (claseCount >= 8) break;
+        }
+
+        // Pagar sueldos para generar movimientos DEBE
+        pagarSueldos();
+    }
+
     public void agregarClase(Clase c) {
         if (c != null && !clases.contains(c)) {
             clases.add(c);
@@ -142,11 +255,17 @@ public class Gimnasio {
                     c
             );
             registros.add(registro);
+            // si la interfaz gráfica está visible, actualizar la grilla
+            SwingUtilities.invokeLater(this::actualizarGrilla);
         }
     }
 
     public void eliminarClase(Clase c) {
         if (c != null && clases.remove(c)) {
+            // remover la clase de la lista del entrenador si aplica
+            if (c.getEntrenador() != null) {
+                c.getEntrenador().getClasesAsignadas().remove(c);
+            }
             Registro registro = new Registro(
                     registros.size() + 1,
                     new java.util.Date(),
@@ -283,6 +402,189 @@ public class Gimnasio {
         }
     }
 
+    /**
+     * Nueva interfaz principal basada en Swing: muestra una grilla semanal (3 turnos x 7 días)
+     * y controles para abrir los menús existentes. La grilla se actualiza cuando se agregan clases.
+     */
+    public void mostrarInterfazPrincipal() {
+        // Crear UI en EDT
+        SwingUtilities.invokeLater(this::createAndShowGUI);
+    }
+
+    private void createAndShowGUI() {
+        if (mainFrame != null) {
+            mainFrame.toFront();
+            return;
+        }
+        mainFrame = new JFrame("Sistema - " + nombre);
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        mainFrame.setLayout(new BorderLayout(8,8));
+
+        // Header: días de la semana
+        JPanel header = new JPanel(new GridLayout(1, diasSemana.length));
+        for (String dia : diasSemana) {
+            JLabel lbl = new JLabel(dia, SwingConstants.CENTER);
+            lbl.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
+            header.add(lbl);
+        }
+        mainFrame.add(header, BorderLayout.NORTH);
+
+        // Grid de turnos x dias
+        JPanel gridPanel = new JPanel(new GridLayout(turnos.length, diasSemana.length));
+        gridButtons = new JButton[turnos.length][diasSemana.length];
+        for (int t = 0; t < turnos.length; t++) {
+            for (int d = 0; d < diasSemana.length; d++) {
+                JButton btn = new JButton();
+                btn.setVerticalTextPosition(SwingConstants.CENTER);
+                btn.setHorizontalTextPosition(SwingConstants.CENTER);
+                btn.setPreferredSize(new Dimension(140, 80));
+                final int turnoIdx = t;
+                final int diaIdx = d;
+                btn.addActionListener(e -> onGridCellClicked(diaIdx, turnoIdx));
+                btn.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+                // deshabilitar la columna Domingo para indicar que no se crean clases ese día
+                if ("Domingo".equalsIgnoreCase(diasSemana[d])) {
+                    btn.setEnabled(false);
+                    btn.setBackground(Color.LIGHT_GRAY);
+                    btn.setToolTipText("No se permiten clases los domingos");
+                }
+                gridButtons[t][d] = btn;
+                gridPanel.add(btn);
+            }
+        }
+        mainFrame.add(gridPanel, BorderLayout.CENTER);
+
+        // Panel de botones de control
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.CENTER, 10,10));
+        JButton btnSocios = new JButton("Socios");
+        btnSocios.addActionListener(e -> menuSocios());
+        JButton btnEmpleados = new JButton("Empleados");
+        btnEmpleados.addActionListener(e -> menuEmpleados());
+        JButton btnClases = new JButton("Clases");
+        btnClases.addActionListener(e -> menuClases());
+        JButton btnCuenta = new JButton("Cuenta bancaria");
+        btnCuenta.addActionListener(e -> menuCuentaBancaria());
+        JButton btnSalir = new JButton("Salir");
+        btnSalir.addActionListener(e -> {
+            mainFrame.dispose();
+            // también cerrar la aplicación
+            System.exit(0);
+        });
+        controls.add(btnSocios);
+        controls.add(btnEmpleados);
+        controls.add(btnClases);
+        controls.add(btnCuenta);
+        controls.add(btnSalir);
+        mainFrame.add(controls, BorderLayout.SOUTH);
+
+        actualizarGrilla();
+
+        mainFrame.pack();
+        mainFrame.setLocationRelativeTo(null);
+        mainFrame.setVisible(true);
+    }
+
+    private void onGridCellClicked(int diaIdx, int turnoIdx) {
+        String dia = diasSemana[diaIdx];
+        String turno = turnos[turnoIdx];
+        // buscar clase en ese slot (debiera ser como máximo una porque evitamos solapamientos)
+        Clase encontrada = null;
+        for (Clase c : clases) {
+            String horario = c.getHorario() != null ? c.getHorario() : "";
+            if (horario.toLowerCase().contains(dia.toLowerCase()) && horario.toLowerCase().contains(turno.toLowerCase())) {
+                encontrada = c;
+                break;
+            }
+        }
+        if (encontrada == null) {
+            JOptionPane.showMessageDialog(null, "No hay clases asignadas en " + dia + " - " + turno);
+            return;
+        }
+
+        String[] opciones = new String[]{"Ver","Modificar","Eliminar","Cancelar"};
+        int sel = JOptionPane.showOptionDialog(null,
+                "Clase: " + encontrada.getNombre() + "\nEntrenador: " + (encontrada.getEntrenador() != null ? encontrada.getEntrenador().getNombre() : "N/A") + "\nCupo: " + encontrada.getCupoMaximo(),
+                dia + " - " + turno,
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null, opciones, opciones[0]);
+
+        if (sel == 0) { // Ver
+            JOptionPane.showMessageDialog(null, encontrada.toString(), "Detalle clase", JOptionPane.INFORMATION_MESSAGE);
+        } else if (sel == 1) { // Modificar
+            // permitir modificar tipo (nombre), cupo y entrenador (entrenador debe tener especialidad compatible)
+            String[] tiposClase = new String[]{"Crossfit","Funcional","Aerobico","Hyorx","Musculacion","Zumba"};
+            String nuevoTipo = (String) JOptionPane.showInputDialog(null, "Tipo de clase:", "Modificar clase",
+                    JOptionPane.QUESTION_MESSAGE, null, tiposClase, encontrada.getNombre());
+            if (nuevoTipo == null) return;
+            String cupoTxt = JOptionPane.showInputDialog(null, "Cupo máximo:", String.valueOf(encontrada.getCupoMaximo()));
+            int nuevoCupo = encontrada.getCupoMaximo();
+            try { if (cupoTxt != null && !cupoTxt.isEmpty()) nuevoCupo = Integer.parseInt(cupoTxt); } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(null, "Cupo inválido. Se mantiene el valor previo."); }
+            // buscar entrenadores disponibles para nuevoTipo
+            java.util.List<Entrenador> disp = new java.util.ArrayList<>();
+            for (Empleado e : empleados) if (e instanceof Entrenador) {
+                Entrenador en = (Entrenador) e;
+                if (en.getEspecialidad() != null && en.getEspecialidad().equalsIgnoreCase(nuevoTipo)) disp.add(en);
+            }
+            if (disp.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No hay entrenadores disponibles para el tipo " + nuevoTipo + ". No se puede modificar.");
+                return;
+            }
+            String[] opts = new String[disp.size()];
+            for (int i=0;i<disp.size();i++) opts[i] = disp.get(i).getDni() + " - " + disp.get(i).getNombre();
+            String elegido = (String) JOptionPane.showInputDialog(null, "Seleccione entrenador:", "Entrenador",
+                    JOptionPane.QUESTION_MESSAGE, null, opts, opts[0]);
+            if (elegido == null) return;
+            Entrenador nuevoEnt = null;
+            try { int d = Integer.parseInt(elegido.split(" - ")[0]); Empleado eSel = buscarEmpleadoPorDni(d); if (eSel instanceof Entrenador) nuevoEnt = (Entrenador)eSel; } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(null, "Selección inválida."); return; }
+            // actualizar entrenador asignado: remover clase del anterior y asignar al nuevo
+            if (encontrada.getEntrenador() != null) {
+                encontrada.getEntrenador().getClasesAsignadas().remove(encontrada);
+            }
+            encontrada.setNombre(nuevoTipo);
+            encontrada.setCupoMaximo(nuevoCupo);
+            encontrada.setEntrenador(nuevoEnt);
+            nuevoEnt.asignarClase(encontrada);
+            actualizarGrilla();
+            JOptionPane.showMessageDialog(null, "Clase modificada.");
+        } else if (sel == 2) { // Eliminar
+            int conf = JOptionPane.showConfirmDialog(null, "Confirma eliminar la clase " + encontrada.getNombre() + "?", "Eliminar", JOptionPane.YES_NO_OPTION);
+            if (conf == JOptionPane.YES_OPTION) {
+                // eliminar de entrenador
+                if (encontrada.getEntrenador() != null) encontrada.getEntrenador().getClasesAsignadas().remove(encontrada);
+                eliminarClase(encontrada);
+                actualizarGrilla();
+                JOptionPane.showMessageDialog(null, "Clase eliminada.");
+            }
+        }
+    }
+
+    private void actualizarGrilla() {
+        if (gridButtons == null) return;
+        // limpiar
+        for (int t = 0; t < turnos.length; t++) {
+            for (int d = 0; d < diasSemana.length; d++) {
+                gridButtons[t][d].setText("");
+            }
+        }
+        // llenar según clases
+        for (Clase c : clases) {
+            String horario = c.getHorario() != null ? c.getHorario() : "";
+            int diaIdx = -1;
+            int turnoIdx = -1;
+            for (int i = 0; i < diasSemana.length; i++) {
+                if (horario.toLowerCase().contains(diasSemana[i].toLowerCase())) { diaIdx = i; break; }
+            }
+            for (int i = 0; i < turnos.length; i++) {
+                if (horario.toLowerCase().contains(turnos[i].toLowerCase())) { turnoIdx = i; break; }
+            }
+            if (diaIdx >= 0 && turnoIdx >= 0) {
+                String text = "<html><b>"+c.getNombre()+"</b><br/>" + (c.getEntrenador()!=null?c.getEntrenador().getNombre():"") + "</html>";
+                gridButtons[turnoIdx][diaIdx].setText(text);
+            }
+        }
+    }
+
     private String construirMenuTexto() {
     return "Seleccione una opción:\n" +
         "1 - Socios (Listar / Agregar / Eliminar)\n" +
@@ -381,7 +683,7 @@ public class Gimnasio {
         boolean volver = false;
         while (!volver) {
             String opcion = JOptionPane.showInputDialog(null,
-                    "Cuenta bancaria - seleccione:\n1 - Registrar pago de socio\n2 - Pagar sueldo a empleado (por DNI)\n3 - Ver monto de la cuenta corriente\n0 - Volver",
+                    "Cuenta bancaria - seleccione:\n1 - Registrar pago de socio\n2 - Pagar sueldo a empleado (por DNI)\n3 - Ver monto de la cuenta corriente\n4 - Ver movimientos (Debe/Haber)\n0 - Volver",
                     "Menú Cuenta Bancaria",
                     JOptionPane.QUESTION_MESSAGE);
             if (opcion == null) return;
@@ -396,6 +698,9 @@ public class Gimnasio {
                     if (cuenta != null) JOptionPane.showMessageDialog(null, "Saldo actual de la cuenta: $" + cuenta.getSaldo());
                     else JOptionPane.showMessageDialog(null, "No hay cuenta bancaria asignada.");
                     break;
+                case "4":
+                    mostrarMovimientosCuentaDialog();
+                    break;
                 case "0":
                     volver = true;
                     break;
@@ -403,6 +708,94 @@ public class Gimnasio {
                     JOptionPane.showMessageDialog(null, "Opción inválida.");
             }
         }
+    }
+
+    /**
+     * Muestra un diálogo con una tabla de movimientos (DEBE/HABER) y filtros por mes/año.
+     * También muestra totales: Haber, Debe y Neto (ganancia/pérdida)
+     */
+    private void mostrarMovimientosCuentaDialog() {
+        if (cuenta == null) {
+            JOptionPane.showMessageDialog(null, "No hay cuenta bancaria asignada.");
+            return;
+        }
+
+        JDialog dialog = new JDialog(mainFrame, "Movimientos de la cuenta - " + (cuenta.getNroCuenta() != null ? cuenta.getNroCuenta() : ""), true);
+        dialog.setLayout(new BorderLayout(8,8));
+
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        String[] meses = new String[]{"Todos","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"};
+        JComboBox<String> cbMes = new JComboBox<>(meses);
+        int añoActual = Calendar.getInstance().get(Calendar.YEAR);
+        String[] años = new String[]{"Todos", String.valueOf(añoActual-1), String.valueOf(añoActual), String.valueOf(añoActual+1)};
+        JComboBox<String> cbAño = new JComboBox<>(años);
+        JButton btnFiltrar = new JButton("Filtrar");
+        top.add(new JLabel("Mes:")); top.add(cbMes);
+        top.add(new JLabel("Año:")); top.add(cbAño);
+        top.add(btnFiltrar);
+        dialog.add(top, BorderLayout.NORTH);
+
+        // Tabla de movimientos
+        DefaultTableModel model = new DefaultTableModel(new Object[]{"Fecha","Tipo","Descripción","Monto"}, 0) {
+            @Override public boolean isCellEditable(int row, int column) { return false; }
+        };
+        JTable table = new JTable(model);
+        JScrollPane sp = new JScrollPane(table);
+        dialog.add(sp, BorderLayout.CENTER);
+
+        JLabel lblResumen = new JLabel(" ");
+        dialog.add(lblResumen, BorderLayout.SOUTH);
+
+        // Helper para poblar la tabla según filtros
+        Runnable poblar = () -> {
+            model.setRowCount(0);
+            int mesSel = cbMes.getSelectedIndex(); // 0 == Todos, 1..12
+            String añoStr = (String) cbAño.getSelectedItem();
+            int añoSel = 0;
+            if (añoStr != null && !"Todos".equalsIgnoreCase(añoStr)) {
+                try { añoSel = Integer.parseInt(añoStr); } catch (NumberFormatException ex) { añoSel = 0; }
+            }
+
+            java.util.List<Registro> lista = new ArrayList<>();
+            if (mesSel == 0 && añoSel == 0) {
+                lista.addAll(cuenta.getMovimientos());
+            } else if (mesSel == 0) {
+                // todos los meses, año específico
+                lista.addAll(cuenta.getMovimientosPorMes(0, añoSel));
+            } else if (añoSel == 0) {
+                // mes específico en todos los años
+                for (Registro r : cuenta.getMovimientos()) {
+                    java.util.Calendar cal = java.util.Calendar.getInstance();
+                    if (r.getFecha() == null) continue;
+                    cal.setTime(r.getFecha());
+                    int m = cal.get(java.util.Calendar.MONTH) + 1;
+                    if (m == mesSel) lista.add(r);
+                }
+            } else {
+                // mes y año específicos
+                lista.addAll(cuenta.getMovimientosPorMes(mesSel, añoSel));
+            }
+
+            double haber = 0.0, debe = 0.0;
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            for (Registro r : lista) {
+                String fecha = r.getFecha() != null ? sdf.format(r.getFecha()) : "";
+                model.addRow(new Object[]{fecha, r.getTipo(), r.getDescripcion(), r.getMonto()});
+                if (r.getTipo() != null && r.getTipo().equalsIgnoreCase("HABER")) haber += r.getMonto();
+                else if (r.getTipo() != null && r.getTipo().equalsIgnoreCase("DEBE")) debe += r.getMonto();
+            }
+            double neto = haber - debe;
+            lblResumen.setText(String.format("Total HABER: $%.2f   Total DEBE: $%.2f   Neto: $%.2f", haber, debe, neto));
+        };
+
+        btnFiltrar.addActionListener(e -> poblar.run());
+
+        // Poblar inicial
+        poblar.run();
+
+        dialog.setSize(800, 400);
+        dialog.setLocationRelativeTo(mainFrame);
+        dialog.setVisible(true);
     }
 
     private void pagarSueldoEmpleadoDesdeMenu() {
@@ -583,7 +976,9 @@ public class Gimnasio {
             double sueldo = 0;
             if (sueldoTxt != null && !sueldoTxt.isEmpty()) sueldo = Double.parseDouble(sueldoTxt);
             if (tipo.equalsIgnoreCase("Entrenador")) {
-                String especialidad = JOptionPane.showInputDialog(null, "Especialidad:");
+        String[] especialidades = new String[]{"Crossfit","Funcional","Aerobico","Hyorx","Musculacion","Zumba"};
+        String especialidad = (String) JOptionPane.showInputDialog(null, "Seleccione especialidad:", "Especialidad",
+            JOptionPane.QUESTION_MESSAGE, null, especialidades, especialidades[0]);
                 String fechaTxt = JOptionPane.showInputDialog(null, "Fecha de nacimiento (dd/MM/yyyy) (opcional):");
                 java.util.Date fechaNac = new java.util.Date();
                 if (fechaTxt != null && !fechaTxt.trim().isEmpty()) {
@@ -649,49 +1044,62 @@ public class Gimnasio {
 
     private void agregarClaseDesdeMenu() {
         try {
-            String nombreClase = JOptionPane.showInputDialog(null, "Nombre de la clase:");
-            if (nombreClase == null) return;
-            String horario = JOptionPane.showInputDialog(null, "Horario (ej. Lunes 10:00):");
-            if (horario == null) horario = "Sin horario";
-            String cupoTxt = JOptionPane.showInputDialog(null, "Cupo máximo:");
+        String[] tiposClase = new String[]{"Crossfit","Funcional","Aerobico","Hyorx","Musculacion","Zumba"};
+        String nombreClase = (String) JOptionPane.showInputDialog(null, "Seleccione tipo de clase:", "Tipo de clase",
+            JOptionPane.QUESTION_MESSAGE, null, tiposClase, tiposClase[0]);
+        if (nombreClase == null) return;
+        // Seleccionar día y turno (grilla). Solo permitir Lunes-Sábado para creación.
+        String[] diasParaCrear = new String[]{"Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"};
+        String dia = (String) JOptionPane.showInputDialog(null, "Día de la clase:", "Día",
+            JOptionPane.QUESTION_MESSAGE, null, diasParaCrear, diasParaCrear[0]);
+        if (dia == null) return;
+        String turno = (String) JOptionPane.showInputDialog(null, "Turno:", "Turno",
+            JOptionPane.QUESTION_MESSAGE, null, turnos, turnos[0]);
+        if (turno == null) return;
+        String horario = dia + " - " + turno;
+        // Verificar que no exista ya una clase en ese día/turno
+        for (Clase existente : clases) {
+            String h = existente.getHorario() != null ? existente.getHorario() : "";
+            if (h.toLowerCase().contains(dia.toLowerCase()) && h.toLowerCase().contains(turno.toLowerCase())) {
+                JOptionPane.showMessageDialog(null, "Ya existe una clase en " + dia + " - " + turno + ". No se puede sobreponer.");
+                return;
+            }
+        }
+        String cupoTxt = JOptionPane.showInputDialog(null, "Cupo máximo:");
             int cupo = 10;
             if (cupoTxt != null && !cupoTxt.isEmpty()) cupo = Integer.parseInt(cupoTxt);
 
-            String dniEntrTxt = JOptionPane.showInputDialog(null, "DNI del entrenador (opcional):");
+            // Seleccionar entrenadores disponibles cuya especialidad coincida con el tipo de clase
             Entrenador ent = null;
-            if (dniEntrTxt != null && !dniEntrTxt.isEmpty()) {
-                try {
-                    int dniEntr = Integer.parseInt(dniEntrTxt);
-                    Empleado e = buscarEmpleadoPorDni(dniEntr);
-                    if (e instanceof Entrenador) ent = (Entrenador) e;
-                } catch (NumberFormatException ex) {
-                    // ignorar
+            java.util.List<Entrenador> entrenadoresDisponibles = new java.util.ArrayList<>();
+            for (Empleado e : empleados) {
+                if (e instanceof Entrenador) {
+                    Entrenador en = (Entrenador) e;
+                    if (en.getEspecialidad() != null && en.getEspecialidad().equalsIgnoreCase(nombreClase)) {
+                        entrenadoresDisponibles.add(en);
+                    }
                 }
             }
-            // El DNI del entrenador NO es opcional: pedir hasta obtener un Entrenador válido o cancelar
-            while (true) {
-                String dniReq = JOptionPane.showInputDialog(null, "DNI del entrenador (obligatorio, cancelar para abortar):");
-                if (dniReq == null) {
-                    // el usuario canceló la operación de creación de clase
-                    JOptionPane.showMessageDialog(null, "Creación de clase cancelada.");
-                    return;
-                }
-                try {
-                    int dniEntr = Integer.parseInt(dniReq.trim());
-                    Empleado e = buscarEmpleadoPorDni(dniEntr);
-                    if (e == null) {
-                        JOptionPane.showMessageDialog(null, "No se encontró empleado con DNI " + dniEntr + ". Ingrese un DNI válido.");
-                        continue;
-                    }
-                    if (!(e instanceof Entrenador)) {
-                        JOptionPane.showMessageDialog(null, "El DNI indicado no corresponde a un Entrenador. Ingrese el DNI de un entrenador.");
-                        continue;
-                    }
-                    ent = (Entrenador) e;
-                    break;
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null, "DNI inválido. Intente nuevamente.");
-                }
+            if (entrenadoresDisponibles.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No hay entrenadores disponibles para el tipo de clase '" + nombreClase + "'.");
+                return;
+            }
+            // Mostrar lista para seleccionar
+            String[] opcionesEntr = new String[entrenadoresDisponibles.size()];
+            for (int i = 0; i < entrenadoresDisponibles.size(); i++) {
+                Entrenador en = entrenadoresDisponibles.get(i);
+                opcionesEntr[i] = en.getDni() + " - " + en.getNombre() + " " + en.getApellido();
+            }
+            String elegido = (String) JOptionPane.showInputDialog(null, "Seleccione entrenador:", "Entrenador",
+                    JOptionPane.QUESTION_MESSAGE, null, opcionesEntr, opcionesEntr[0]);
+            if (elegido == null) return; // cancel
+            try {
+                int dniSel = Integer.parseInt(elegido.split(" - ")[0]);
+                Empleado eSel = buscarEmpleadoPorDni(dniSel);
+                if (eSel instanceof Entrenador) ent = (Entrenador) eSel;
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(null, "Selección inválida de entrenador.");
+                return;
             }
 
             Clase c = new Clase(nombreClase, horario, cupo, ent, null);
@@ -821,7 +1229,13 @@ public class Gimnasio {
                 JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
         if (seleccionado == null) return;
         // extraer dni
-        int dni = Integer.parseInt(seleccionado.split(" - ")[0]);
+        int dni = -1;
+        try {
+            dni = Integer.parseInt(seleccionado.split(" - ")[0]);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(null, "DNI inválido en la selección.");
+            return;
+        }
         Socio s = buscarSocioPorDni(dni);
         if (s == null) return;
         int confirm = JOptionPane.showConfirmDialog(null, "¿Confirma eliminar a " + s.getNombre() + " " + s.getApellido() + "?",
@@ -842,11 +1256,17 @@ public class Gimnasio {
             Empleado e = empleados.get(i);
             opciones[i] = e.getDni() + " - " + e.getNombre() + " " + e.getApellido();
         }
-        String seleccionado = (String) JOptionPane.showInputDialog(null, "Seleccione empleado a eliminar:", "Eliminar empleado",
-                JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
-        if (seleccionado == null) return;
-        int dni = Integer.parseInt(seleccionado.split(" - ")[0]);
-        Empleado e = buscarEmpleadoPorDni(dni);
+    String seleccionado = (String) JOptionPane.showInputDialog(null, "Seleccione empleado a eliminar:", "Eliminar empleado",
+        JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
+    if (seleccionado == null) return;
+    int dni = -1;
+    try {
+        dni = Integer.parseInt(seleccionado.split(" - ")[0]);
+    } catch (NumberFormatException ex) {
+        JOptionPane.showMessageDialog(null, "DNI inválido en la selección.");
+        return;
+    }
+    Empleado e = buscarEmpleadoPorDni(dni);
         if (e == null) return;
         int confirm = JOptionPane.showConfirmDialog(null, "¿Confirma eliminar a " + e.getNombre() + " " + e.getApellido() + "?",
                 "Confirmar eliminación", JOptionPane.YES_NO_OPTION);

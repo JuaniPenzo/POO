@@ -45,9 +45,9 @@ public class Socio {
         if (cuenta == null || cuentaGimnasio == null || monto <= 0) {
             return false;
         }
-
         if (cuenta.extraer(monto)) {
-            cuentaGimnasio.depositar(monto);
+            // depositar en la cuenta del gimnasio y vincular este socio al movimiento
+            cuentaGimnasio.depositar(monto, "Pago de cuota del socio " + this.getNombre() + " (DNI:" + this.getDni() + ")", this, null, null);
             // actualizar fecha de vencimiento del plan: sumar los meses contratados
             Date ahora = new Date();
             Date base = (fechaVencimientoPlan != null && fechaVencimientoPlan.after(ahora)) ? fechaVencimientoPlan : ahora;

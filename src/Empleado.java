@@ -44,7 +44,8 @@ public abstract class Empleado {
             return false;
         }
 
-        return cuentaGimnasio.extraer(sueldo);
+        // extraer y registrar el movimiento vinculando el empleado
+        return cuentaGimnasio.extraer(sueldo, "Pago de sueldo a " + this.getNombre() + " (DNI:" + this.getDni() + ")", null, this, null);
     }
 
     @Override
