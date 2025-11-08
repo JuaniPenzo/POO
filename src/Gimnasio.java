@@ -10,12 +10,10 @@ public class Gimnasio {
     private int CUIT;
     private String direccion;
     private String provincia;
-
     private List<Empleado> empleados;
     private List<Socio> socios;
     private List<Clase> clases;
     private List<Registro> registros;
-
     private CuentaBancaria cuenta;
 
     public Gimnasio(String nombre, int CUIT, String direccion, String provincia) {
@@ -239,36 +237,6 @@ public class Gimnasio {
         return true;
     }
 
-    public boolean inscribirSocioEnClase(Socio socio, Clase clase) {
-        if (socio == null || clase == null) {
-            return false;
-        }
-        if (!socios.contains(socio) || !clases.contains(clase)) {
-            return false;
-        }
-
-        if (!clase.agregarSocio(socio)) {
-            return false;
-        }
-
-        socio.inscribirse(clase);
-        return true;
-    }
-
-    public boolean desinscribirSocioDeClase(Socio socio, Clase clase) {
-        if (socio == null || clase == null) {
-            return false;
-        }
-        if (!clases.contains(clase)) {
-            return false;
-        }
-
-        boolean eliminado = clase.eliminarSocio(socio);
-        if (eliminado) {
-            socio.cancelarInscripcion(clase);
-        }
-        return eliminado;
-    }
 
     public void mostrarMenuPrincipal() {
         boolean salir = false;

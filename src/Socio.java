@@ -13,8 +13,6 @@ public class Socio {
     private String membresia;
     private List<Clase> clasesInscriptas;
     private CuentaBancaria cuenta;
-
-    // Nuevos campos requeridos
     private Date fechaInscripcion;
     private Date fechaVencimientoPlan; // fecha en que vence el plan
     private boolean activo;
@@ -41,22 +39,6 @@ public class Socio {
         this.activo = activo;
         this.plan = plan != null ? plan : "";
         this.planMeses = planMeses;
-    }
-
-    public boolean inscribirse(Clase c) {
-        if (c == null) {
-            return false;
-        }
-
-        if (!clasesInscriptas.contains(c)) {
-            clasesInscriptas.add(c);
-            return true;
-        }
-        return false;
-    }
-
-    public boolean cancelarInscripcion(Clase c) {
-        return clasesInscriptas.remove(c);
     }
 
     public boolean pagarCuota(double monto, CuentaBancaria cuentaGimnasio) {
