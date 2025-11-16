@@ -37,6 +37,20 @@ public class Registro {
                 '}';
     }
 
+    public void guardarEnArchivo() {
+    try {
+        java.io.FileWriter fw = new java.io.FileWriter("registros.txt", true);  // true = append
+        java.io.BufferedWriter bw = new java.io.BufferedWriter(fw);
+        java.io.PrintWriter pw = new java.io.PrintWriter(bw);
+
+        pw.println(this.toString());  // escribe el registro como texto
+        pw.close();
+    } catch (Exception e) {
+        System.err.println("Error al guardar registro en archivo: " + e.getMessage());
+    }
+    }
+
+
     // Getters y setters
 
     public int getIdRegistro() {

@@ -91,6 +91,8 @@ public class Gimnasio {
                     null
             );
             registros.add(registro);
+            registro.guardarEnArchivo();
+
         }
     }
 
@@ -107,6 +109,8 @@ public class Gimnasio {
                     null
             );
             registros.add(registro);
+            registro.guardarEnArchivo();
+
         }
     }
 
@@ -124,6 +128,8 @@ public class Gimnasio {
                     null
             );
             registros.add(registro);
+            registro.guardarEnArchivo();
+
         }
     }
 
@@ -140,6 +146,8 @@ public class Gimnasio {
                     null
             );
             registros.add(registro);
+            registro.guardarEnArchivo();
+
         }
     }
 
@@ -255,6 +263,8 @@ public class Gimnasio {
                     c
             );
             registros.add(registro);
+            registro.guardarEnArchivo();
+
             // si la interfaz gráfica está visible, actualizar la grilla
             SwingUtilities.invokeLater(this::actualizarGrilla);
         }
@@ -277,6 +287,8 @@ public class Gimnasio {
                     c
             );
             registros.add(registro);
+            registro.guardarEnArchivo();
+
         }
     }
 
@@ -323,6 +335,8 @@ public class Gimnasio {
                 null
         );
         registros.add(registro);
+        registro.guardarEnArchivo();
+
         return true;
     }
 
@@ -353,6 +367,8 @@ public class Gimnasio {
                 null
         );
         registros.add(registro);
+        registro.guardarEnArchivo();
+
         return true;
     }
 
