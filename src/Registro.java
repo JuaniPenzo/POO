@@ -1,5 +1,9 @@
 import java.util.Date;
 
+/**
+ * Clase que representa un registro (movimiento o acción) en el sistema.
+ * Puede corresponder a un ingreso o egreso de dinero (HABER/DEBE) u otras acciones del sistema (agregar/eliminar entidades).
+ */
 public class Registro {
 
     private int idRegistro;
@@ -38,82 +42,39 @@ public class Registro {
     }
 
     public void guardarEnArchivo() {
-    try {
-        java.io.FileWriter fw = new java.io.FileWriter("registros.txt", true);  // true = append
-        java.io.BufferedWriter bw = new java.io.BufferedWriter(fw);
-        java.io.PrintWriter pw = new java.io.PrintWriter(bw);
-
-        pw.println(this.toString());  // escribe el registro como texto
-        pw.close();
-    } catch (Exception e) {
-        System.err.println("Error al guardar registro en archivo: " + e.getMessage());
-    }
-    }
-
-
-    // Getters y setters
-
-    public int getIdRegistro() {
-        return idRegistro;
-    }
-
-    public void setIdRegistro(int idRegistro) {
-        this.idRegistro = idRegistro;
+        try (java.io.PrintWriter pw = new java.io.PrintWriter(
+                new java.io.BufferedWriter(new java.io.FileWriter("registros.txt", true)))) {
+            pw.println(this.toString());
+        } catch (java.io.IOException e) {
+            System.err.println("Error al guardar registro en archivo: " + e.getMessage());
+        }
     }
 
     public Date getFecha() {
         return fecha;
     }
 
-    public void setFecha(Date fecha) {
-        this.fecha = fecha;
-    }
-
     public String getTipo() {
         return tipo;
-    }
-
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
     }
 
     public String getDescripcion() {
         return descripcion;
     }
 
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-
     public double getMonto() {
         return monto;
-    }
-
-    public void setMonto(double monto) {
-        this.monto = monto;
     }
 
     public Socio getSocio() {
         return socio;
     }
 
-    public void setSocio(Socio socio) {
-        this.socio = socio;
-    }
-
     public Empleado getEmpleado() {
         return empleado;
     }
 
-    public void setEmpleado(Empleado empleado) {
-        this.empleado = empleado;
-    }
-
     public Clase getClase() {
         return clase;
-    }
-
-    public void setClase(Clase clase) {
-        this.clase = clase;
     }
 }

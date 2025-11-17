@@ -2,9 +2,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Clase que representa una actividad o sesión dictada en el gimnasio.
+ * Tiene un nombre (tipo de clase), un horario (día y turno), cupo máximo, un entrenador asignado y los socios inscriptos.
+ */
 public class Clase {
 
     private String nombre;
+    /** Horario en formato "Día - Turno" (ejemplo: "Lunes - Mañana"). */
     private String horario;
     private int cupoMaximo;
     private Entrenador entrenador;
@@ -18,6 +23,15 @@ public class Clase {
         this.entrenador = entrenador;
         this.sociosInscriptos = crearListaInicial(sociosInscriptos);
     }
+
+    public Clase(String nombre, String dia, String turno, int cupoMaximo, Entrenador entrenador) {
+    this.nombre = nombre;
+    this.horario = dia + " - " + turno; // Armamos el formato correcto
+    this.cupoMaximo = cupoMaximo;
+    this.entrenador = entrenador;
+    this.sociosInscriptos = new ArrayList<>();
+}
+
 
     public boolean agregarSocio(Socio s) {
         if (s == null) {

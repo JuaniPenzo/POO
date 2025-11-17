@@ -1,5 +1,8 @@
 import java.util.Date;
 
+/**
+ * Subclase de Empleado que representa al personal de limpieza, con horario de trabajo y sector asignado.
+ */
 public class Limpieza extends Empleado {
 
     private String horarioTrabajo;

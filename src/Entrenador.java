@@ -2,6 +2,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Subclase de Empleado que representa a un Entrenador, con especialidad y clases asignadas.
+ */
 public class Entrenador extends Empleado {
 
     private String especialidad;

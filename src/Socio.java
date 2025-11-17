@@ -5,6 +5,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Clase que representa un socio del gimnasio.
+ * Contiene sus datos personales, estado de plan, cuenta bancaria y clases inscriptas.
+ */
 public class Socio {
 
     private String nombre;
@@ -51,9 +55,9 @@ public class Socio {
             // actualizar fecha de vencimiento del plan: sumar los meses contratados
             Date ahora = new Date();
             Date base = (fechaVencimientoPlan != null && fechaVencimientoPlan.after(ahora)) ? fechaVencimientoPlan : ahora;
-            java.util.Calendar cal = java.util.Calendar.getInstance();
+            Calendar cal = Calendar.getInstance();
             cal.setTime(base);
-            if (planMeses > 0) cal.add(java.util.Calendar.MONTH, planMeses);
+            if (planMeses > 0) cal.add(Calendar.MONTH, planMeses);
             fechaVencimientoPlan = cal.getTime();
             this.activo = true;
             return true;
@@ -106,10 +110,6 @@ public class Socio {
         this.membresia = membresia;
     }
 
-    public List<Clase> getClasesInscriptas() {
-        return Collections.unmodifiableList(clasesInscriptas);
-    }
-
     public CuentaBancaria getCuenta() {
         return cuenta;
     }
@@ -134,21 +134,6 @@ public class Socio {
         this.fechaVencimientoPlan = fechaVencimientoPlan;
     }
 
-    public boolean isActivo() {
-        if (fechaVencimientoPlan == null) {
-            this.activo = false;
-            return false;
-        }
-        Date ahora = new Date();
-        boolean ahoraActivo = !ahora.after(fechaVencimientoPlan); // ahora <= vencimiento
-        this.activo = ahoraActivo;
-        return ahoraActivo;
-    }
-
-    public void setActivo(boolean activo) {
-        this.activo = activo;
-    }
-
     public String getPlan() {
         return plan;
     }
@@ -165,10 +150,33 @@ public class Socio {
         this.planMeses = planMeses;
     }
 
+    /**
+     * Verifica si el socio está activo (plan vigente a la fecha actual).
+     * Actualiza el atributo 'activo' según la fecha de vencimiento del plan.
+     */
+    public boolean isActivo() {
+        if (fechaVencimientoPlan == null) {
+            this.activo = false;
+            return false;
+        }
+        Date ahora = new Date();
+        boolean ahoraActivo = !ahora.after(fechaVencimientoPlan); // ahora <= vencimiento
+        this.activo = ahoraActivo;
+        return ahoraActivo;
+    }
+
+    public void setActivo(boolean activo) {
+        this.activo = activo;
+    }
+
     public String getFechaVencimientoFormateada() {
-        if (fechaVencimientoPlan == null) return "N/A";
+        if (fechaVencimientoPlan == null) return "";
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         return sdf.format(fechaVencimientoPlan);
+    }
+
+    public List<Clase> getClasesInscriptas() {
+        return Collections.unmodifiableList(clasesInscriptas);
     }
 
     private List<Clase> crearListaInicial(List<Clase> clases) {

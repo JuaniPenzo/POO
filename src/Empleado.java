@@ -1,6 +1,9 @@
 import java.util.Calendar;
 import java.util.Date;
 
+/**
+ * Clase abstracta que representa un empleado genérico del gimnasio (modelo base para distintos tipos de empleados).
+ */
 public abstract class Empleado {
 
     private String nombre;
@@ -59,8 +62,6 @@ public abstract class Empleado {
                 ", sueldo=" + sueldo +
                 '}';
     }
-
-    // Getters y setters
 
     public String getNombre() {
         return nombre;

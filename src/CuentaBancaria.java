@@ -4,6 +4,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Clase que representa una cuenta bancaria simple con saldo y registro de movimientos (débitos y créditos).
+ */
 public class CuentaBancaria {
 
     private String nroCuenta;
@@ -99,9 +102,6 @@ public class CuentaBancaria {
         return Collections.unmodifiableList(movimientos);
     }
 
-    /**
-     * Filtra movimientos por mes (1-12) y año. Si month == 0, devuelve todos los movimientos del año.
-     */
     public List<Registro> getMovimientosPorMes(int month, int year) {
         List<Registro> result = new ArrayList<>();
         Calendar cal = Calendar.getInstance();
@@ -143,17 +143,5 @@ public class CuentaBancaria {
 
     public void setNroCuenta(String nroCuenta) {
         this.nroCuenta = nroCuenta;
-    }
-
-    public void setSaldo(double saldo) {
-        this.saldo = saldo;
-    }
-
-    public String getTitular() {
-        return titular;
-    }
-
-    public void setTitular(String titular) {
-        this.titular = titular;
     }
 }

@@ -3,9 +3,9 @@ public class Main {
         System.out.println("Main iniciado");
         try {
             Gimnasio gimnasio = Gimnasio.iniciarSistemaDemo();
-            System.out.println("Gimnasio creado: " + gimnasio.getNombre());
-            // Abrir interfaz gráfica principal (grilla semanal)
-            gimnasio.mostrarInterfazPrincipal();
+            // Iniciar la interfaz gráfica principal
+            InterfazGimnasio interfaz = new InterfazGimnasio(gimnasio);
+            interfaz.mostrarInterfazPrincipal();
             System.out.println("Main finalizado correctamente");
         } catch (Throwable t) {
             System.err.println("Excepción en Main:");
