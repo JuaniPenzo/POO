@@ -40,7 +40,6 @@ public abstract class Empleado {
 
     /**
      * Descuenta el sueldo desde la cuenta del gimnasio.
-     * Podrías luego extender esto para depositar en una cuenta de empleado.
      */
     public boolean cobrarSueldo(CuentaBancaria cuentaGimnasio) {
         if (cuentaGimnasio == null) {

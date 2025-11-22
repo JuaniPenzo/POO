@@ -2,7 +2,12 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("Main iniciado");
         try {
-            Gimnasio gimnasio = Gimnasio.iniciarSistemaDemo();
+            // Inicializar gimnasio vacío
+            Gimnasio gimnasio = new Gimnasio("Gimnasio Olavarría", 123456789, "San Martín 123", "Buenos Aires");
+
+            // Cargar datos persistidos
+            gimnasio.cargarDatos();
+
             // Iniciar la interfaz gráfica principal
             InterfazGimnasio interfaz = new InterfazGimnasio(gimnasio);
             interfaz.mostrarInterfazPrincipal();

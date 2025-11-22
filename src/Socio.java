@@ -7,7 +7,8 @@ import java.util.List;
 
 /**
  * Clase que representa un socio del gimnasio.
- * Contiene sus datos personales, estado de plan, cuenta bancaria y clases inscriptas.
+ * Contiene sus datos personales, estado de plan, cuenta bancaria y clases
+ * inscriptas.
  */
 public class Socio {
 
@@ -18,20 +19,20 @@ public class Socio {
     private List<Clase> clasesInscriptas;
     private CuentaBancaria cuenta;
     private Date fechaInscripcion;
-    private Date fechaVencimientoPlan; // fecha en que vence el plan
+    private Date fechaVencimientoPlan;
     private boolean activo;
-    private String plan; // ejemplo: "Premium"
+    private String plan;
     private int planMeses; // duración en meses: 1,3,6,12
 
     public Socio(String nombre, String apellido, int dni, String membresia,
-                 List<Clase> clasesInscriptas, CuentaBancaria cuenta) {
+            List<Clase> clasesInscriptas, CuentaBancaria cuenta) {
         this(nombre, apellido, dni, membresia, clasesInscriptas, cuenta, new Date(), null, false, "", 0);
     }
 
     // Constructor ampliado con los nuevos campos
     public Socio(String nombre, String apellido, int dni, String membresia,
-                 List<Clase> clasesInscriptas, CuentaBancaria cuenta,
-                 Date fechaInscripcion, Date fechaVencimientoPlan, boolean activo, String plan, int planMeses) {
+            List<Clase> clasesInscriptas, CuentaBancaria cuenta,
+            Date fechaInscripcion, Date fechaVencimientoPlan, boolean activo, String plan, int planMeses) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.dni = dni;
@@ -49,15 +50,18 @@ public class Socio {
         if (cuenta == null || cuentaGimnasio == null || monto <= 0) {
             return false;
         }
-        if (cuenta.extraer(monto)) {
+        if (cuenta.extraerForzado(monto, "Pago de cuota", this, null, null)) {
             // depositar en la cuenta del gimnasio y vincular este socio al movimiento
-            cuentaGimnasio.depositar(monto, "Pago de cuota del socio " + this.getNombre() + " (DNI:" + this.getDni() + ")", this, null, null);
+            cuentaGimnasio.depositar(monto,
+                    "Pago de cuota del socio " + this.getNombre() + " (DNI:" + this.getDni() + ")", this, null, null);
             // actualizar fecha de vencimiento del plan: sumar los meses contratados
             Date ahora = new Date();
-            Date base = (fechaVencimientoPlan != null && fechaVencimientoPlan.after(ahora)) ? fechaVencimientoPlan : ahora;
+            Date base = (fechaVencimientoPlan != null && fechaVencimientoPlan.after(ahora)) ? fechaVencimientoPlan
+                    : ahora;
             Calendar cal = Calendar.getInstance();
             cal.setTime(base);
-            if (planMeses > 0) cal.add(Calendar.MONTH, planMeses);
+            if (planMeses > 0)
+                cal.add(Calendar.MONTH, planMeses);
             fechaVencimientoPlan = cal.getTime();
             this.activo = true;
             return true;
@@ -170,7 +174,8 @@ public class Socio {
     }
 
     public String getFechaVencimientoFormateada() {
-        if (fechaVencimientoPlan == null) return "";
+        if (fechaVencimientoPlan == null)
+            return "";
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         return sdf.format(fechaVencimientoPlan);
     }

@@ -2,13 +2,13 @@ import java.util.*;
 
 /**
  * Clase principal del modelo que representa el gimnasio y gestiona a los empleados, socios, clases, pagos y registros.
- * Separa la lógica de negocio (gestión de datos) de la interfaz de usuario (ver {@link InterfazGimnasio}).
  */
 public class Gimnasio {
     // Constantes de configuración
-    public static final String[] DIAS_SEMANA = {"Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"};
-    public static final String[] TURNOS = {"Mañana","Tarde","Noche"};
-    public static final String[] TIPOS_CLASE = {"Crossfit","Funcional","Aerobico","Hyorx","Musculacion","Zumba"};
+    public static final String[] DIAS_SEMANA = { "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado",
+            "Domingo" };
+    public static final String[] TURNOS = { "Mañana", "Tarde", "Noche" };
+    public static final String[] TIPOS_CLASE = { "Crossfit", "Funcional", "Aerobico", "Hyorx", "Musculacion", "Zumba" };
 
     // Datos del gimnasio
     private String nombre;
@@ -57,10 +57,9 @@ public class Gimnasio {
                     0,
                     null,
                     e,
-                    null
-            );
+                    null);
             registros.add(registro);
-            registro.guardarEnArchivo();
+            guardarEstadoCompleto();
         }
     }
 
@@ -76,10 +75,9 @@ public class Gimnasio {
                     0,
                     null,
                     e,
-                    null
-            );
+                    null);
             registros.add(registro);
-            registro.guardarEnArchivo();
+            guardarEstadoCompleto();
         }
     }
 
@@ -95,10 +93,9 @@ public class Gimnasio {
                     0,
                     s,
                     null,
-                    null
-            );
+                    null);
             registros.add(registro);
-            registro.guardarEnArchivo();
+            guardarEstadoCompleto();
         }
     }
 
@@ -113,10 +110,9 @@ public class Gimnasio {
                     0,
                     s,
                     null,
-                    null
-            );
+                    null);
             registros.add(registro);
-            registro.guardarEnArchivo();
+            guardarEstadoCompleto();
         }
     }
 
@@ -136,10 +132,9 @@ public class Gimnasio {
                     0,
                     null,
                     null,
-                    c
-            );
+                    c);
             registros.add(registro);
-            registro.guardarEnArchivo();
+            guardarEstadoCompleto();
         }
     }
 
@@ -157,37 +152,38 @@ public class Gimnasio {
                     0,
                     null,
                     null,
-                    c
-            );
+                    c);
             registros.add(registro);
-            registro.guardarEnArchivo();
+            guardarEstadoCompleto();
         }
     }
 
     // Métodos de pagos y transacciones financieras
 
-    /**
-     * Recorre todos los empleados y les paga el sueldo desde la cuenta del gimnasio.
-     * @return la cantidad de empleados a quienes se pagó correctamente.
-     */
-    public int pagarSueldos() {
-        if (cuenta == null) {
-            return 0;
+    public boolean registrarPagoSueldo(Empleado e) {
+        if (e == null || cuenta == null) {
+            return false;
         }
-        int empleadosPagados = 0;
-        for (Empleado e : empleados) {
-            if (e.cobrarSueldo(cuenta)) {
-                empleadosPagados++;
-            }
+        boolean pagoRealizado = e.cobrarSueldo(cuenta);
+        if (!pagoRealizado) {
+            return false;
         }
-        return empleadosPagados;
+        Registro registro = new Registro(
+                registros.size() + 1,
+                new Date(),
+                "DEBE",
+                "Pago de sueldo a " + e.getNombre() + " " + e.getApellido(),
+                e.getSueldo(),
+                null,
+                e,
+                null);
+        registros.add(registro);
+        guardarEstadoCompleto();
+        return true;
     }
 
     /**
      * Registra el pago de la cuota de un socio (extrae de la cuenta del socio y deposita en la del gimnasio).
-     * @param s Socio que realiza el pago.
-     * @param monto Monto de la cuota a pagar.
-     * @return true si el pago se realizó correctamente, false en caso contrario.
      */
     public boolean registrarPagoSocio(Socio s, double monto) {
         if (s == null || cuenta == null) {
@@ -200,46 +196,14 @@ public class Gimnasio {
         Registro registro = new Registro(
                 registros.size() + 1,
                 new Date(),
-                "PAGO_CUOTA",
+                "HABER",
                 "Pago de cuota del socio " + s.getNombre() + " " + s.getApellido(),
                 monto,
                 s,
                 null,
-                null
-        );
+                null);
         registros.add(registro);
-        registro.guardarEnArchivo();
-        return true;
-    }
-
-    /**
-     * Anula un pago de cuota de un socio (genera un movimiento inverso de devolución).
-     * @param s Socio al que se le anulará el pago.
-     * @param monto Monto a devolver.
-     * @return true si la anulación se realizó correctamente, false en caso contrario.
-     */
-    public boolean anularRegistroPagoSocio(Socio s, double monto) {
-        if (s == null || cuenta == null) {
-            return false;
-        }
-        if (!cuenta.extraer(monto)) {
-            return false;
-        }
-        if (s.getCuenta() != null) {
-            s.getCuenta().depositar(monto);
-        }
-        Registro registro = new Registro(
-                registros.size() + 1,
-                new Date(),
-                "ANULACION_PAGO",
-                "Anulación de pago de cuota del socio " + s.getNombre() + " " + s.getApellido(),
-                -monto,
-                s,
-                null,
-                null
-        );
-        registros.add(registro);
-        registro.guardarEnArchivo();
+        guardarEstadoCompleto();
         return true;
     }
 
@@ -334,141 +298,347 @@ public class Gimnasio {
     }
 
     /**
-     * Inicializa un sistema de gimnasio con datos de demostración.
-     * Crea un gimnasio con empleados, socios, clases y movimientos de ejemplo para pruebas.
+     * Carga los datos del sistema desde el archivo de registros.
+     * Reconstruye el estado del gimnasio reproduciendo los eventos guardados.
      */
-    public static Gimnasio iniciarSistemaDemo() {
-        // Crear cuenta bancaria del gimnasio con saldo inicial
-        CuentaBancaria cuentaGimnasio = new CuentaBancaria("001", 100000, "Gimnasio Olavarría");
-        Gimnasio gimnasio = new Gimnasio("Gimnasio Olavarría", 123456789, "San Martín 123", "Buenos Aires");
-        gimnasio.setCuenta(cuentaGimnasio);
+    public void cargarDatos() {
+        java.io.File archivo = new java.io.File("registros.txt");
+        if (!archivo.exists()) {
+            // Si no existe, iniciamos con cuenta vacía o básica
+            this.cuenta = new CuentaBancaria("001", 0, this.nombre);
+            return;
+        }
 
-        Date fechaBase = new Date();
-        // Empleados iniciales de ejemplo
-        Entrenador entrenador1 = new Entrenador("Carlos", "Pérez", 12345, "M", fechaBase, 50000, "Crossfit", null);
-        Limpieza limpieza1 = new Limpieza("Lucía", "Gómez", 67890, "F", fechaBase, 30000, "08:00-12:00", "Salón principal");
-        gimnasio.agregarEmpleado(entrenador1);
-        gimnasio.agregarEmpleado(limpieza1);
+        try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(archivo))) {
+            String linea;
+            boolean primeraLinea = true;
+            while ((linea = br.readLine()) != null) {
+                if (linea.trim().isEmpty())
+                    continue;
 
-        // Clase demo inicial (Lunes - Mañana)
-        Clase clase1 = new Clase("Funcional", "Lunes - Mañana", 20, entrenador1, null);
-        gimnasio.agregarClase(clase1);
-        
-        // Asignar la clase al entrenador
-        entrenador1.asignarClase(clase1);
+                if (primeraLinea) {
+                    if (linea.startsWith("GIMNASIO|")) {
+                        // GIMNASIO|Nombre|CUIT|Direccion|Provincia|NroCuenta|Saldo
+                        String[] partes = linea.split("\\|");
+                        if (partes.length >= 7) {
+                            this.nombre = partes[1];
+                            this.CUIT = Integer.parseInt(partes[2]);
+                            this.direccion = partes[3];
+                            this.provincia = partes[4];
+                            String nroCuenta = partes[5];
+                            double saldo = Double.parseDouble(partes[6]);
+                            this.cuenta = new CuentaBancaria(nroCuenta, saldo, this.nombre);
+                        }
+                        primeraLinea = false;
+                        continue;
+                    }
+                    primeraLinea = false;
+                }
 
-        // Socio inicial de ejemplo
-        CuentaBancaria cuentaSocio = new CuentaBancaria("002", 50000, "Juan López");
-        Socio socio1 = new Socio("Juan", "López", 11111, "Premium", null, cuentaSocio);
-        gimnasio.agregarSocio(socio1);
-        // Registrar un pago inicial de cuota
-        gimnasio.registrarPagoSocio(socio1, 10000);
-        // Pagar sueldos iniciales
-        gimnasio.pagarSueldos();
-
-        // Poblar gimnasio con más datos de prueba
-        gimnasio.seedDatosCompletos();
-
-        return gimnasio;
+                procesarRegistro(linea, true);
+            }
+            // Si no se creó cuenta (archivo viejo o sin header), crear una por defecto
+            if (this.cuenta == null) {
+                this.cuenta = new CuentaBancaria("001", 0, this.nombre);
+            }
+        } catch (Exception e) {
+            System.err.println("Error al cargar datos: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
-    /**
-     * Carga un conjunto amplio de datos de ejemplo en el gimnasio.
-     * Incluye múltiples entrenadores, personal de limpieza, socios, clases y algunos movimientos financieros.
-     */
-    private void seedDatosCompletos() {
-        String[] especialidades = TIPOS_CLASE;
-        // Entrenadores adicionales (nombre, apellido, dni, sexo, sueldo, especialidad)
-        Object[][] entrenadoresData = {
-            {"Federico","Álvarez",20123456,"M",50000.0, "Crossfit"},
-            {"Sofía","Morales",20234567,"F",48000.0, "Funcional"},
-            {"Valentina","López",20345678,"F",46000.0, "Zumba"},
-            {"Diego","Fernández",20456789,"M",52000.0, "Musculacion"},
-            {"Camila","Díaz",20567890,"F",45000.0, "Aerobico"},
-            {"Matías","Romero",20678901,"M",51000.0, "Hyorx"}
-        };
-        for (Object[] row : entrenadoresData) {
-            String nom = (String) row[0];
-            String ape = (String) row[1];
-            int dni = (int) row[2];
-            String sexo = (String) row[3];
-            double sueldo = (double) row[4];
-            String esp = (String) row[5];
-            Entrenador ent = new Entrenador(nom, ape, dni, sexo, new Date(), sueldo, esp, null);
-            agregarEmpleado(ent);
-        }
-        // Personal de limpieza adicional
-        String[][] limpiezaData = {
-            {"Ana","Ruiz","F"},
-            {"Laura","Medina","F"},
-            {"Paula","Castro","F"}
-        };
-        for (int i = 0; i < limpiezaData.length; i++) {
-            String nom = limpiezaData[i][0];
-            String ape = limpiezaData[i][1];
-            String sexo = limpiezaData[i][2];
-            Limpieza limp = new Limpieza(nom, ape, 30010 + i, sexo, new Date(), 26000, "08:00-12:00", "Sector " + (i+1));
-            agregarEmpleado(limp);
-        }
-        // Socios adicionales con cuentas bancarias
-        String[][] sociosData = {
-            {"Martín","García","40123456"},
-            {"María","Rodríguez","40134567"},
-            {"Lucía","González","40145678"},
-            {"José","Martínez","40156789"},
-            {"Camila","Pérez","40167890"},
-            {"Lucas","Hernández","40178901"},
-            {"Ana","Sánchez","40189012"},
-            {"Fernando","Torres","40190123"},
-            {"Martina","Vargas","40201234"},
-            {"Bruno","Rossi","40212345"}
-        };
-        int idx = 0;
-        int[] opcionesMeses = {1,3,6,12};
-        for (String[] sdata : sociosData) {
-            String nom = sdata[0];
-            String ape = sdata[1];
-            int dni = Integer.parseInt(sdata[2]);
-            String nroCuenta = "AR" + dni;
-            CuentaBancaria cb = new CuentaBancaria(nroCuenta, 180000 + (idx * 5000), nom + " " + ape);
-            Socio socio = new Socio(nom, ape, dni, "Estándar", null, cb);
-            int meses = opcionesMeses[idx % opcionesMeses.length];
-            socio.setPlanMeses(meses);
-            socio.setPlan(meses + " meses");
-            agregarSocio(socio);
-            // Registrar pagos de cuota para la mayoría de los socios
-            if (idx < 9) {
-                registrarPagoSocio(socio, 35000 * meses);
-            }
-            idx++;
-        }
-        // Crear algunas clases automáticamente (hasta 8 clases)
-        String[] dias = {"Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"};
-        int claseCount = 0;
-        for (String dia : dias) {
-            for (String turno : TURNOS) {
-                if (claseCount >= 8) break;
-                String tipo = especialidades[claseCount % especialidades.length];
-                // Buscar entrenador con especialidad correspondiente
-                Entrenador entrenador = null;
-                for (Empleado e : empleados) {
-                    if (e instanceof Entrenador) {
-                        Entrenador en = (Entrenador) e;
-                        if (en.getEspecialidad() != null && en.getEspecialidad().equalsIgnoreCase(tipo)) {
-                            entrenador = en; break;
+    private void procesarRegistro(String linea, boolean isLoading) {
+        try {
+            String[] partes = linea.split("\\|");
+            if (partes.length < 6)
+                return;
+
+            int id = Integer.parseInt(partes[0]);
+            String tipo = partes[2];
+            String desc = partes[3];
+            double monto = Double.parseDouble(partes[4]);
+            String datosExtra = partes[5];
+
+            Socio socioRef = null;
+            Empleado empleadoRef = null;
+            Clase claseRef = null;
+
+            if (tipo.equals("AGREGAR_SOCIO")) {
+                String[] datos = datosExtra.split(";");
+                if (datos.length >= 7) {
+                    int dni = Integer.parseInt(datos[1]);
+                    String nombre = datos[2];
+                    String apellido = datos[3];
+                    String membresia = datos[4];
+                    int planMeses = Integer.parseInt(datos[5]);
+                    String nroCuenta = datos[6];
+
+                    CuentaBancaria cb = new CuentaBancaria(nroCuenta, 0, nombre + " " + apellido);
+                    Socio s = new Socio(nombre, apellido, dni, membresia, null, cb);
+                    s.setPlanMeses(planMeses);
+                    s.setPlan(planMeses + " meses");
+                    socios.add(s);
+                    sociosPorDni.put(dni, s);
+                    socioRef = s;
+                }
+            } else if (tipo.equals("AGREGAR_EMPLEADO")) {
+                String[] datos = datosExtra.split(";");
+                if (datos.length >= 8) {
+                    String claseTipo = datos[1];
+                    int dni = Integer.parseInt(datos[2]);
+                    String nombre = datos[3];
+                    String apellido = datos[4];
+                    String sexo = datos[5];
+                    double sueldo = Double.parseDouble(datos[6]);
+
+                    Empleado e = null;
+                    if (claseTipo.equals("Entrenador")) {
+                        String esp = datos[7];
+                        e = new Entrenador(nombre, apellido, dni, sexo, new Date(), sueldo, esp, null);
+                    } else if (claseTipo.equals("Limpieza")) {
+                        String horario = datos[7];
+                        String sector = (datos.length > 8) ? datos[8] : "";
+                        e = new Limpieza(nombre, apellido, dni, sexo, new Date(), sueldo, horario, sector);
+                    }
+
+                    if (e != null) {
+                        empleados.add(e);
+                        empleadosPorDni.put(dni, e);
+                        empleadoRef = e;
+                    }
+                }
+            } else if (tipo.equals("AGREGAR_CLASE")) {
+                String[] datos = datosExtra.split(";");
+                if (datos.length >= 5) {
+                    String nombre = datos[1];
+                    String horario = datos[2];
+                    int cupo = Integer.parseInt(datos[3]);
+                    String dniEntStr = datos[4];
+
+                    Entrenador ent = null;
+                    if (!dniEntStr.equals("null")) {
+                        Empleado emp = empleadosPorDni.get(Integer.parseInt(dniEntStr));
+                        if (emp instanceof Entrenador)
+                            ent = (Entrenador) emp;
+                    }
+
+                    Clase c = new Clase(nombre, horario, cupo, ent, null);
+                    clases.add(c);
+                    clasesPorHorario.put(horario, c);
+                    if (ent != null)
+                        ent.asignarClase(c);
+                    claseRef = c;
+                }
+            } else if (tipo.equals("ELIMINAR_SOCIO")) {
+                String[] datos = datosExtra.split(";");
+                if (datos.length >= 2) {
+                    int dni = Integer.parseInt(datos[1]);
+                    Socio s = sociosPorDni.get(dni);
+                    if (s != null) {
+                        socios.remove(s);
+                        sociosPorDni.remove(dni);
+                        socioRef = s;
+                    }
+                }
+            } else if (tipo.equals("ELIMINAR_EMPLEADO")) {
+                String[] datos = datosExtra.split(";");
+                if (datos.length >= 3) {
+                    int dni = Integer.parseInt(datos[2]);
+                    Empleado e = empleadosPorDni.get(dni);
+                    if (e != null) {
+                        empleados.remove(e);
+                        empleadosPorDni.remove(dni);
+                        empleadoRef = e;
+                    }
+                }
+            } else if (tipo.equals("ELIMINAR_CLASE")) {
+                String[] datos = datosExtra.split(";");
+                if (datos.length >= 3) {
+                    String horario = datos[2];
+                    Clase c = clasesPorHorario.get(horario);
+                    if (c != null) {
+                        clases.remove(c);
+                        clasesPorHorario.remove(horario);
+                        if (c.getEntrenador() != null) {
+                            c.getEntrenador().getClasesAsignadas().remove(c);
+                        }
+                        claseRef = c;
+                    }
+                }
+            } else if (tipo.equals("HABER")) {
+                // Si estamos cargando, NO actualizamos el saldo porque ya lo leímos del header
+                if (!isLoading) {
+                    if (this.cuenta == null)
+                        this.cuenta = new CuentaBancaria("001", 0, this.nombre);
+                    this.cuenta.depositar(monto, desc);
+                }
+
+                if (!datosExtra.equals("null") && datosExtra.startsWith("SOCIO")) {
+                    String[] datos = datosExtra.split(";");
+                    int dni = Integer.parseInt(datos[1]);
+                    Socio s = sociosPorDni.get(dni);
+                    if (s != null) {
+                        if (s.getCuenta() != null) {
+                            s.getCuenta().extraer(monto, "Pago cuota (histórico)");
+                        }
+                        socioRef = s;
+                    }
+                }
+            } else if (tipo.equals("DEBE")) {
+                if (!isLoading) {
+                    if (this.cuenta != null)
+                        this.cuenta.extraer(monto, desc);
+                }
+                if (!datosExtra.equals("null") && datosExtra.startsWith("EMPLEADO")) {
+                    String[] datos = datosExtra.split(";");
+                    // EMPLEADO;Clase;dni...
+                    if (datos.length >= 3) {
+                        int dni = Integer.parseInt(datos[2]);
+                        Empleado e = empleadosPorDni.get(dni);
+                        if (e != null) {
+                            empleadoRef = e;
                         }
                     }
                 }
-                if (entrenador == null) continue;
-                Clase nuevaClase = new Clase(tipo, dia + " - " + turno, 20, entrenador, null);
-                agregarClase(nuevaClase);
-                // Asignar clase al entrenador
-                entrenador.asignarClase(nuevaClase);
-                claseCount++;
+            } else if (tipo.equals("ANULACION_PAGO")) {
+                if (!isLoading) {
+                    if (this.cuenta != null)
+                        this.cuenta.extraer(Math.abs(monto), desc);
+                }
+                if (!datosExtra.equals("null") && datosExtra.startsWith("SOCIO")) {
+                    String[] datos = datosExtra.split(";");
+                    int dni = Integer.parseInt(datos[1]);
+                    Socio s = sociosPorDni.get(dni);
+                    if (s != null && s.getCuenta() != null) {
+                        s.getCuenta().depositar(Math.abs(monto), "Devolución (histórico)");
+                        socioRef = s;
+                    }
+                }
+            } else if (tipo.equals("MODIFICAR_SOCIO")) {
+                String[] datos = datosExtra.split(";");
+                if (datos.length >= 7) {
+                    int dni = Integer.parseInt(datos[1]);
+                    Socio s = sociosPorDni.get(dni);
+                    if (s != null) {
+                        s.setNombre(datos[2]);
+                        s.setApellido(datos[3]);
+                        s.setMembresia(datos[4]);
+                        int planMeses = Integer.parseInt(datos[5]);
+                        s.setPlanMeses(planMeses);
+                        s.setPlan(planMeses + " meses");
+                        if (s.getCuenta() != null)
+                            s.getCuenta().setNroCuenta(datos[6]);
+                        socioRef = s;
+                    }
+                }
+            } else if (tipo.equals("MODIFICAR_EMPLEADO")) {
+                String[] datos = datosExtra.split(";");
+                if (datos.length >= 7) {
+                    int dni = Integer.parseInt(datos[2]);
+                    Empleado e = empleadosPorDni.get(dni);
+                    if (e != null) {
+                        e.setNombre(datos[3]);
+                        e.setApellido(datos[4]);
+                        e.setSexo(datos[5]);
+                        e.setSueldo(Double.parseDouble(datos[6]));
+
+                        if (e instanceof Entrenador && datos.length > 7) {
+                            ((Entrenador) e).setEspecialidad(datos[7]);
+                        } else if (e instanceof Limpieza && datos.length > 7) {
+                            ((Limpieza) e).setHorarioTrabajo(datos[7]);
+                            if (datos.length > 8)
+                                ((Limpieza) e).setSector(datos[8]);
+                        }
+                        empleadoRef = e;
+                    }
+                }
+            } else if (tipo.equals("MODIFICAR_CLASE")) {
+                String[] datos = datosExtra.split(";");
+                if (datos.length >= 5) {
+                    String horario = datos[2];
+                    Clase c = clasesPorHorario.get(horario);
+                    if (c != null) {
+                        c.setNombre(datos[1]);
+                        c.setCupoMaximo(Integer.parseInt(datos[3]));
+                        String dniEntStr = datos[4];
+                        if (!dniEntStr.equals("null")) {
+                            int dniEnt = Integer.parseInt(dniEntStr);
+                            Empleado emp = empleadosPorDni.get(dniEnt);
+                            if (emp instanceof Entrenador) {
+                                c.setEntrenador((Entrenador) emp);
+                                ((Entrenador) emp).asignarClase(c);
+                            }
+                        } else {
+                            c.setEntrenador(null);
+                        }
+                        claseRef = c;
+                    }
+                }
             }
-            if (claseCount >= 8) break;
+
+            // Crear el objeto Registro y añadirlo a la lista en memoria
+            java.util.Date fecha = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss").parse(partes[1]);
+            Registro reg = new Registro(id, fecha, tipo, desc, monto, socioRef, empleadoRef, claseRef);
+            registros.add(reg);
+            if (isLoading && this.cuenta != null) {
+                if (tipo.equals("HABER") || tipo.equals("DEBE") ||
+                        tipo.equals("ANULACION_PAGO") || tipo.equals("DEPOSITO") ||
+                        tipo.equals("EXTRACCION") || tipo.equals("HABER") || tipo.equals("DEBE")) {
+                    this.cuenta.agregarMovimiento(reg);
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error procesando línea registro: " + linea + " -> " + e.getMessage());
         }
-        // Pagar sueldos una vez más para generar movimientos DEBE adicionales
-        pagarSueldos();
+    }
+
+    /**
+     * Guarda el estado completo del gimnasio (header con saldo) y todos los registros.
+     * Sobrescribe el archivo registros.txt.
+     */
+    public void guardarEstadoCompleto() {
+        try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter("registros.txt"))) {
+            // Escribir Header
+            // GIMNASIO|Nombre|CUIT|Direccion|Provincia|NroCuenta|Saldo
+            String nroCuenta = (cuenta != null) ? cuenta.getNroCuenta() : "000";
+            double saldo = (cuenta != null) ? cuenta.getSaldo() : 0.0;
+            pw.println("GIMNASIO|" + nombre + "|" + CUIT + "|" + direccion + "|" + provincia + "|" + nroCuenta + "|"
+                    + saldo);
+
+            // Escribir Registros
+            for (Registro r : registros) {
+                pw.println(r.toCSV());
+            }
+        } catch (java.io.IOException e) {
+            System.err.println("Error al guardar estado completo: " + e.getMessage());
+        }
+    }
+
+    public void registrarModificacionSocio(Socio s) {
+        if (s == null)
+            return;
+        Registro registro = new Registro(registros.size() + 1, new Date(), "MODIFICAR_SOCIO",
+                "Se modificó socio: " + s.getNombre() + " " + s.getApellido(), 0, s, null, null);
+        registros.add(registro);
+        guardarEstadoCompleto();
+    }
+
+    public void registrarModificacionEmpleado(Empleado e) {
+        if (e == null)
+            return;
+        Registro registro = new Registro(registros.size() + 1, new Date(), "MODIFICAR_EMPLEADO",
+                "Se modificó empleado: " + e.getNombre() + " " + e.getApellido(), 0, null, e, null);
+        registros.add(registro);
+        guardarEstadoCompleto();
+    }
+
+    public void registrarModificacionClase(Clase c) {
+        if (c == null)
+            return;
+        Registro registro = new Registro(registros.size() + 1, new Date(), "MODIFICAR_CLASE",
+                "Se modificó clase: " + c.getNombre(), 0, null, null, c);
+        registros.add(registro);
+        guardarEstadoCompleto();
     }
 }

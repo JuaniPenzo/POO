@@ -1,0 +1,39 @@
+GIMNASIO|Gym Test|123|Calle Falsa 123|Ciudad|001|236000.0
+1|01/11/2025 09:00:00|AGREGAR_SOCIO|Se agregó socio: Juan Perez|0.0|SOCIO;11111111;Juan;Perez;Premium;6;S001
+2|01/11/2025 09:15:00|AGREGAR_SOCIO|Se agregó socio: Maria Garcia|0.0|SOCIO;22222222;Maria;Garcia;Premium;6;S002
+3|01/11/2025 09:30:00|AGREGAR_SOCIO|Se agregó socio: Carlos Lopez|0.0|SOCIO;33333333;Carlos;Lopez;Estándar;1;S003
+4|02/11/2025 10:00:00|AGREGAR_EMPLEADO|Se agregó empleado: Ana Martinez|0.0|EMPLEADO;Entrenador;44444444;Ana;Martinez;F;8000.0;Crossfit
+5|02/11/2025 10:30:00|AGREGAR_EMPLEADO|Se agregó empleado: Pedro Sanchez|0.0|EMPLEADO;Entrenador;55555555;Pedro;Sanchez;M;7500.0;Funcional
+6|02/11/2025 11:00:00|AGREGAR_EMPLEADO|Se agregó empleado: Laura Rodriguez|0.0|EMPLEADO;Limpieza;66666666;Laura;Rodriguez;F;4500.0;Mañana;Salón Principal
+7|03/11/2025 08:00:00|AGREGAR_CLASE|Se agregó clase: Crossfit|0.0|CLASE;Crossfit;Lunes - Mañana;20;44444444
+8|03/11/2025 08:30:00|AGREGAR_CLASE|Se agregó clase: Funcional|0.0|CLASE;Funcional;Martes - Tarde;15;55555555
+9|03/11/2025 09:00:00|AGREGAR_CLASE|Se agregó clase: Yoga|0.0|CLASE;Yoga;Miércoles - Mañana;12;44444444
+10|05/11/2025 18:00:00|HABER|Pago de cuota del socio Juan Perez|12000.0|SOCIO;11111111;Juan;Perez;Premium;6;S001
+11|05/11/2025 18:30:00|HABER|Pago de cuota del socio Maria Garcia|25000.0|SOCIO;22222222;Maria;Garcia;Premium;6;S002
+12|06/11/2025 16:00:00|HABER|Pago de cuota del socio Carlos Lopez|8000.0|SOCIO;33333333;Carlos;Lopez;Estándar;1;S003
+13|07/11/2025 09:00:00|DEBE|Pago de sueldo a Ana Martinez|8000.0|EMPLEADO;Entrenador;44444444;Ana;Martinez;F;8000.0;Crossfit
+14|07/11/2025 09:15:00|DEBE|Pago de sueldo a Pedro Sanchez|7500.0|EMPLEADO;Entrenador;55555555;Pedro;Sanchez;M;7500.0;Funcional
+15|07/11/2025 09:30:00|DEBE|Pago de sueldo a Laura Rodriguez|4500.0|EMPLEADO;Limpieza;66666666;Laura;Rodriguez;F;4500.0;Mañana;Salón Principal
+16|10/11/2025 17:00:00|HABER|Pago de cuota del socio Juan Perez|12000.0|SOCIO;11111111;Juan;Perez;Premium;6;S001
+17|10/11/2025 17:30:00|HABER|Pago de cuota del socio Maria Garcia|25000.0|SOCIO;22222222;Maria;Garcia;Premium;6;S002
+18|12/11/2025 19:00:00|AGREGAR_SOCIO|Se agregó socio: Sofia Fernandez|0.0|SOCIO;77777777;Sofia;Fernandez;Premium;6;S004
+19|12/11/2025 19:30:00|HABER|Pago de cuota del socio Sofia Fernandez|25000.0|SOCIO;77777777;Sofia;Fernandez;Premium;6;S004
+20|15/11/2025 08:00:00|DEBE|Pago de sueldo a Ana Martinez|8000.0|EMPLEADO;Entrenador;44444444;Ana;Martinez;F;8000.0;Crossfit
+21|15/11/2025 08:15:00|DEBE|Pago de sueldo a Pedro Sanchez|7500.0|EMPLEADO;Entrenador;55555555;Pedro;Sanchez;M;7500.0;Funcional
+22|15/11/2025 08:30:00|DEBE|Pago de sueldo a Laura Rodriguez|4500.0|EMPLEADO;Limpieza;66666666;Laura;Rodriguez;F;4500.0;Mañana;Salón Principal
+23|16/11/2025 18:00:00|HABER|Pago de cuota del socio Carlos Lopez|8000.0|SOCIO;33333333;Carlos;Lopez;Estándar;1;S003
+24|18/11/2025 10:00:00|MODIFICAR_SOCIO|Se modificó socio: Juan Perez|0.0|SOCIO;11111111;Juan;Perez;Premium;6;S001
+25|18/11/2025 10:30:00|HABER|Pago de cuota del socio Juan Perez|25000.0|SOCIO;11111111;Juan;Perez;Premium;6;S001
+26|20/11/2025 16:00:00|HABER|Pago de cuota del socio Maria Garcia|25000.0|SOCIO;22222222;Maria;Garcia;Premium;6;S002
+27|20/11/2025 16:30:00|HABER|Pago de cuota del socio Sofia Fernandez|25000.0|SOCIO;77777777;Sofia;Fernandez;Premium;6;S004
+28|21/11/2025 09:00:00|AGREGAR_EMPLEADO|Se agregó empleado: Roberto Diaz|0.0|EMPLEADO;Entrenador;88888888;Roberto;Diaz;M;9000.0;Musculacion
+29|21/11/2025 09:30:00|AGREGAR_CLASE|Se agregó clase: Musculacion|0.0|CLASE;Musculacion;Jueves - Tarde;18;88888888
+30|21/11/2025 18:00:00|HABER|Pago de cuota del socio Carlos Lopez|8000.0|SOCIO;33333333;Carlos;Lopez;Estándar;1;S003
+31|21/11/2025 20:54:11|ELIMINAR_CLASE|Se eliminó clase: Musculacion|0.0|CLASE;Musculacion;Jueves - Tarde;18;88888888
+32|21/11/2025 20:54:27|AGREGAR_CLASE|Se agregó clase: Crossfit|0.0|CLASE;Crossfit;Viernes - Mañana;10;44444444
+33|21/11/2025 21:11:36|DEBE|Pago de sueldo a Roberto Diaz|9000.0|EMPLEADO;Entrenador;88888888;Roberto;Diaz;M;9000.0;Musculacion
+34|21/11/2025 21:45:48|AGREGAR_SOCIO|Se agregó socio: AAA AAA|0.0|SOCIO;930;AAA;AAA;A;6;1
+35|21/11/2025 21:47:19|ELIMINAR_CLASE|Se eliminó clase: Funcional|0.0|CLASE;Funcional;Martes - Tarde;15;55555555
+36|21/11/2025 21:47:53|AGREGAR_CLASE|Se agregó clase: Crossfit|0.0|CLASE;Crossfit;Martes - Mañana;20;44444444
+37|21/11/2025 21:48:22|MODIFICAR_CLASE|Se modificó clase: Crossfit|0.0|CLASE;Crossfit;Martes - Mañana;20;44444444
+38|21/11/2025 21:48:43|ELIMINAR_EMPLEADO|Se eliminó empleado: Pedro Sanchez|0.0|EMPLEADO;Entrenador;55555555;Pedro;Sanchez;M;7500.0;Funcional
