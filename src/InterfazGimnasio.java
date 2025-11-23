@@ -8,7 +8,8 @@ import java.util.Calendar;
 import java.util.List;
 
 /**
- * Clase que maneja la interfaz de usuario del gimnasio, utilizando Swing y JOptionPane para interacción.
+ * Clase que maneja la interfaz de usuario del gimnasio, utilizando Swing y
+ * JOptionPane para interacción.
  */
 public class InterfazGimnasio {
     private Gimnasio gimnasio;
@@ -23,7 +24,8 @@ public class InterfazGimnasio {
     }
 
     /**
-     * Muestra la interfaz gráfica principal (grilla semanal de clases y panel de control).
+     * Muestra la interfaz gráfica principal (grilla semanal de clases y panel de
+     * control).
      */
     public void mostrarInterfazPrincipal() {
         // Crear la interfaz gráfica en el hilo de eventos de Swing
@@ -31,13 +33,25 @@ public class InterfazGimnasio {
     }
 
     /**
-     * Crea y muestra la ventana principal con la grilla de clases y botones de menú.
+     * Crea y muestra la ventana principal con la grilla de clases y botones de
+     * menú.
      */
     private void crearYMostrarGUI() {
         if (mainFrame != null) {
             mainFrame.toFront();
             return;
         }
+
+        // Aumentar tamaño de fuente global
+        java.util.Enumeration<Object> keys = UIManager.getDefaults().keys();
+        while (keys.hasMoreElements()) {
+            Object key = keys.nextElement();
+            Object value = UIManager.get(key);
+            if (value instanceof javax.swing.plaf.FontUIResource) {
+                UIManager.put(key, new javax.swing.plaf.FontUIResource("Arial", Font.PLAIN, 16));
+            }
+        }
+
         mainFrame = new JFrame("Sistema - " + gimnasio.getNombre());
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setLayout(new BorderLayout(8, 8));
@@ -59,7 +73,9 @@ public class InterfazGimnasio {
                 JButton btn = new JButton();
                 btn.setVerticalTextPosition(SwingConstants.CENTER);
                 btn.setHorizontalTextPosition(SwingConstants.CENTER);
-                btn.setPreferredSize(new Dimension(140, 80));
+                btn.setVerticalTextPosition(SwingConstants.CENTER);
+                btn.setHorizontalTextPosition(SwingConstants.CENTER);
+                btn.setPreferredSize(new Dimension(200, 100)); // Aumentado de 140x80
                 final int turnoIdx = t;
                 final int diaIdx = d;
                 btn.addActionListener((ActionEvent e) -> onGridCellClicked(diaIdx, turnoIdx));
@@ -107,7 +123,8 @@ public class InterfazGimnasio {
 
     /**
      * Acción al hacer clic en una celda de la grilla (día y turno específicos).
-     * Muestra detalles de la clase en ese horario o indica si está libre, permitiendo gestionar la clase.
+     * Muestra detalles de la clase en ese horario o indica si está libre,
+     * permitiendo gestionar la clase.
      */
     private void onGridCellClicked(int diaIdx, int turnoIdx) {
         String dia = Gimnasio.DIAS_SEMANA[diaIdx];
@@ -130,67 +147,91 @@ public class InterfazGimnasio {
             // Ver detalles de la clase
             JOptionPane.showMessageDialog(null, clase.toString(), "Detalle de clase", JOptionPane.INFORMATION_MESSAGE);
         } else if (sel == 1) {
+        } else if (sel == 1) {
             // Modificar la clase (tipo, cupo y entrenador)
-            String nuevoTipo = (String) JOptionPane.showInputDialog(null, "Tipo de clase:", "Modificar clase",
-                    JOptionPane.QUESTION_MESSAGE, null, Gimnasio.TIPOS_CLASE, clase.getNombre());
-            if (nuevoTipo == null)
-                return;
-            String cupoTxt = JOptionPane.showInputDialog(null, "Cupo máximo:", String.valueOf(clase.getCupoMaximo()));
-            int nuevoCupo = clase.getCupoMaximo();
-            try {
-                if (cupoTxt != null && !cupoTxt.trim().isEmpty()) {
-                    nuevoCupo = Integer.parseInt(cupoTxt);
-                }
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(null, "Cupo inválido. Se mantiene el valor anterior.");
-            }
-            // Obtener entrenadores disponibles de esa especialidad
-            List<Entrenador> disponibles = new ArrayList<>();
-            for (Empleado e : gimnasio.getEmpleados()) {
-                if (e instanceof Entrenador) {
-                    Entrenador ent = (Entrenador) e;
-                    if (ent.getEspecialidad() != null && ent.getEspecialidad().equalsIgnoreCase(nuevoTipo)) {
-                        disponibles.add(ent);
+            JComboBox<String> cmbTipo = new JComboBox<>(Gimnasio.TIPOS_CLASE);
+            cmbTipo.setSelectedItem(clase.getNombre());
+            JTextField txtCupo = new JTextField(String.valueOf(clase.getCupoMaximo()));
+            JComboBox<String> cmbEntrenador = new JComboBox<>();
+
+            JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+            panel.add(new JLabel("Tipo de Clase:"));
+            panel.add(cmbTipo);
+            panel.add(new JLabel("Cupo Máximo:"));
+            panel.add(txtCupo);
+            panel.add(new JLabel("Entrenador:"));
+            panel.add(cmbEntrenador);
+
+            // Actualizar entrenadores
+            java.awt.event.ActionListener updateTrainers = e -> {
+                cmbEntrenador.removeAllItems();
+                String tipo = (String) cmbTipo.getSelectedItem();
+                for (Empleado emp : gimnasio.getEmpleados()) {
+                    if (emp instanceof Entrenador) {
+                        Entrenador ent = (Entrenador) emp;
+                        if (ent.getEspecialidad() != null && ent.getEspecialidad().equalsIgnoreCase(tipo)) {
+                            cmbEntrenador.addItem(ent.getDni() + " - " + ent.getNombre());
+                        }
                     }
                 }
-            }
-            if (disponibles.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "No hay entrenadores disponibles para el tipo " + nuevoTipo);
-                return;
-            }
-            String[] opcionesEnt = new String[disponibles.size()];
-            for (int i = 0; i < disponibles.size(); i++) {
-                Entrenador ent = disponibles.get(i);
-                opcionesEnt[i] = ent.getDni() + " - " + ent.getNombre();
-            }
-            String elegido = (String) JOptionPane.showInputDialog(null, "Seleccione entrenador:", "Entrenador",
-                    JOptionPane.QUESTION_MESSAGE, null, opcionesEnt, opcionesEnt[0]);
-            if (elegido == null)
-                return;
-            Entrenador nuevoEntrenador = null;
-            try {
-                int dni = Integer.parseInt(elegido.split(" - ")[0]);
-                Empleado empSel = gimnasio.buscarEmpleadoPorDni(dni);
-                if (empSel instanceof Entrenador) {
-                    nuevoEntrenador = (Entrenador) empSel;
+                // Intentar seleccionar el actual si coincide
+                if (clase.getEntrenador() != null) {
+                    String actual = clase.getEntrenador().getDni() + " - " + clase.getEntrenador().getNombre();
+                    for (int i = 0; i < cmbEntrenador.getItemCount(); i++) {
+                        if (cmbEntrenador.getItemAt(i).equals(actual)) {
+                            cmbEntrenador.setSelectedIndex(i);
+                            break;
+                        }
+                    }
                 }
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(null, "Selección de entrenador inválida.");
-                return;
+            };
+            cmbTipo.addActionListener(updateTrainers);
+            updateTrainers.actionPerformed(null);
+
+            while (true) {
+                int result = JOptionPane.showConfirmDialog(null, panel, "Modificar Clase",
+                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+                if (result == JOptionPane.OK_OPTION) {
+                    try {
+                        String nuevoTipo = (String) cmbTipo.getSelectedItem();
+                        String cupoTxt = txtCupo.getText().trim();
+                        String entSel = (String) cmbEntrenador.getSelectedItem();
+
+                        if (cupoTxt.isEmpty())
+                            throw new Exception("El cupo es obligatorio.");
+                        int nuevoCupo = Integer.parseInt(cupoTxt);
+                        if (nuevoCupo <= 0)
+                            throw new Exception("El cupo debe ser mayor a 0.");
+
+                        if (entSel == null)
+                            throw new Exception("Debe seleccionar un entrenador.");
+
+                        int dniEnt = Integer.parseInt(entSel.split(" - ")[0]);
+                        Entrenador nuevoEntrenador = (Entrenador) gimnasio.buscarEmpleadoPorDni(dniEnt);
+
+                        // Reasignar
+                        if (clase.getEntrenador() != null) {
+                            clase.getEntrenador().getClasesAsignadas().remove(clase);
+                        }
+                        clase.setNombre(nuevoTipo);
+                        clase.setCupoMaximo(nuevoCupo);
+                        clase.setEntrenador(nuevoEntrenador);
+                        nuevoEntrenador.asignarClase(clase);
+
+                        actualizarGrilla();
+                        gimnasio.registrarModificacionClase(clase);
+                        JOptionPane.showMessageDialog(null, "Clase modificada exitosamente.");
+                        break;
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(null, "El cupo debe ser numérico.");
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage());
+                    }
+                } else {
+                    break;
+                }
             }
-            // Reasignar clase a nuevo entrenador
-            if (clase.getEntrenador() != null) {
-                clase.getEntrenador().getClasesAsignadas().remove(clase);
-            }
-            clase.setNombre(nuevoTipo);
-            clase.setCupoMaximo(nuevoCupo);
-            clase.setEntrenador(nuevoEntrenador);
-            if (nuevoEntrenador != null) {
-                nuevoEntrenador.asignarClase(clase);
-            }
-            actualizarGrilla();
-            gimnasio.registrarModificacionClase(clase);
-            JOptionPane.showMessageDialog(null, "Clase modificada.");
         } else if (sel == 2) {
             // Eliminar la clase
             int confirm = JOptionPane.showConfirmDialog(null, "¿Confirma eliminar la clase " + clase.getNombre() + "?",
@@ -205,7 +246,8 @@ public class InterfazGimnasio {
     }
 
     /**
-     * Actualiza los textos de la grilla de clases en la interfaz según las clases actuales del gimnasio.
+     * Actualiza los textos de la grilla de clases en la interfaz según las clases
+     * actuales del gimnasio.
      */
     private void actualizarGrilla() {
         for (int t = 0; t < Gimnasio.TURNOS.length; t++) {
@@ -231,126 +273,139 @@ public class InterfazGimnasio {
     // ==== Menús de opciones (Socios, Empleados, Clases, Cuenta, etc.) ====
 
     private void menuSocios() {
-        boolean volver = false;
-        while (!volver) {
-            String opcion = JOptionPane.showInputDialog(null,
-                    "Socios - seleccione:\n1 - Listar socios\n2 - Agregar socio\n3 - Eliminar socio (por DNI)\n4 - Modificar socio (por DNI)\n0 - Volver",
+        String[] opciones = { "Listar socios", "Agregar socio", "Eliminar socio", "Modificar socio", "Volver" };
+        while (true) {
+            int seleccion = JOptionPane.showOptionDialog(
+                    null,
+                    "Seleccione una opción:",
                     "Menú Socios",
-                    JOptionPane.QUESTION_MESSAGE);
-            if (opcion == null)
-                return;
-            switch (opcion) {
-                case "1":
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    opciones,
+                    opciones[0]);
+
+            if (seleccion == JOptionPane.CLOSED_OPTION || seleccion == 4) {
+                break;
+            }
+
+            switch (seleccion) {
+                case 0: // Listar
                     listarSocios();
                     break;
-                case "2":
+                case 1: // Agregar
                     agregarSocioDesdeMenu();
                     break;
-                case "3":
+                case 2: // Eliminar
                     eliminarSocioPorDni();
                     break;
-                case "4":
+                case 3: // Modificar
                     modificarSocioPorDni();
                     break;
-                case "0":
-                    volver = true;
-                    break;
-                default:
-                    JOptionPane.showMessageDialog(null, "Opción inválida.");
             }
         }
     }
 
     private void menuEmpleados() {
-        boolean volver = false;
-        while (!volver) {
-            String opcion = JOptionPane.showInputDialog(null,
-                    "Empleados - seleccione:\n1 - Listar empleados\n2 - Agregar empleado\n3 - Eliminar empleado (por DNI)\n4 - Modificar empleado (por DNI)\n0 - Volver",
+        String[] opciones = { "Listar empleados", "Agregar empleado", "Eliminar empleado", "Modificar empleado",
+                "Volver" };
+        while (true) {
+            int seleccion = JOptionPane.showOptionDialog(
+                    null,
+                    "Seleccione una opción:",
                     "Menú Empleados",
-                    JOptionPane.QUESTION_MESSAGE);
-            if (opcion == null)
-                return;
-            switch (opcion) {
-                case "1":
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    opciones,
+                    opciones[0]);
+
+            if (seleccion == JOptionPane.CLOSED_OPTION || seleccion == 4) {
+                break;
+            }
+
+            switch (seleccion) {
+                case 0: // Listar
                     listarEmpleados();
                     break;
-                case "2":
+                case 1: // Agregar
                     agregarEmpleadoDesdeMenu();
                     break;
-                case "3":
+                case 2: // Eliminar
                     eliminarEmpleadoPorDni();
                     break;
-                case "4":
+                case 3: // Modificar
                     modificarEmpleadoPorDni();
                     break;
-                case "0":
-                    volver = true;
-                    break;
-                default:
-                    JOptionPane.showMessageDialog(null, "Opción inválida.");
             }
         }
     }
 
     private void menuClases() {
-        boolean volver = false;
-        while (!volver) {
-            String opcion = JOptionPane.showInputDialog(null,
-                    "Clases - seleccione:\n1 - Listar clases\n2 - Agregar clase\n3 - Eliminar clase\n0 - Volver",
+        String[] opciones = { "Listar clases", "Agregar clase", "Eliminar clase", "Volver" };
+        while (true) {
+            int seleccion = JOptionPane.showOptionDialog(
+                    null,
+                    "Seleccione una opción:",
                     "Menú Clases",
-                    JOptionPane.QUESTION_MESSAGE);
-            if (opcion == null)
-                return;
-            switch (opcion) {
-                case "1":
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    opciones,
+                    opciones[0]);
+
+            if (seleccion == JOptionPane.CLOSED_OPTION || seleccion == 3) {
+                break;
+            }
+
+            switch (seleccion) {
+                case 0: // Listar
                     listarClases();
                     break;
-                case "2":
+                case 1: // Agregar
                     agregarClaseDesdeMenu();
                     break;
-                case "3":
+                case 2: // Eliminar
                     eliminarClaseSeleccion();
                     break;
-                case "0":
-                    volver = true;
-                    break;
-                default:
-                    JOptionPane.showMessageDialog(null, "Opción inválida.");
             }
         }
     }
 
     private void menuCuentaBancaria() {
-        boolean volver = false;
-        while (!volver) {
-            String opcion = JOptionPane.showInputDialog(null,
-                    "Cuenta bancaria - seleccione:\n1 - Registrar pago de socio\n2 - Pagar sueldo a empleado\n3 - Consultar saldo del gimnasio\n4 - Ver movimientos de cuenta\n0 - Volver",
+        String[] opciones = { "Registrar pago socio", "Pagar sueldo", "Consultar saldo", "Ver movimientos", "Volver" };
+        while (true) {
+            int seleccion = JOptionPane.showOptionDialog(
+                    null,
+                    "Seleccione una opción:",
                     "Menú Cuenta Bancaria",
-                    JOptionPane.QUESTION_MESSAGE);
-            if (opcion == null)
-                return;
-            switch (opcion) {
-                case "1":
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    opciones,
+                    opciones[0]);
+
+            if (seleccion == JOptionPane.CLOSED_OPTION || seleccion == 4) {
+                break;
+            }
+
+            switch (seleccion) {
+                case 0: // Registrar pago socio
                     gestionarPagoSocio();
                     break;
-                case "2":
+                case 1: // Pagar sueldo
                     pagarSueldoEmpleadoDesdeMenu();
                     break;
-                case "3":
+                case 2: // Consultar saldo
                     if (gimnasio.getCuenta() != null) {
                         JOptionPane.showMessageDialog(null, "Saldo actual: $" + gimnasio.getCuenta().getSaldo());
                     } else {
                         JOptionPane.showMessageDialog(null, "No hay cuenta bancaria asignada al gimnasio.");
                     }
                     break;
-                case "4":
+                case 3: // Ver movimientos
                     mostrarMovimientosCuentaDialog();
                     break;
-                case "0":
-                    volver = true;
-                    break;
-                default:
-                    JOptionPane.showMessageDialog(null, "Opción inválida.");
             }
         }
     }
@@ -406,170 +461,72 @@ public class InterfazGimnasio {
         JOptionPane.showMessageDialog(null, detalle.toString());
     }
 
-    private void agregarClaseDesdeMenu() {
-        try {
-            // Selección del tipo de clase
-            String tipo = (String) JOptionPane.showInputDialog(
-                    null,
-                    "Seleccione el tipo de clase:",
-                    "Nueva clase",
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    Gimnasio.TIPOS_CLASE,
-                    Gimnasio.TIPOS_CLASE[0]);
-            if (tipo == null)
-                return;
-
-            // Selección del día
-            String[] diasSinDomingo = java.util.Arrays.stream(Gimnasio.DIAS_SEMANA)
-                    .filter(d -> !d.equalsIgnoreCase("Domingo"))
-                    .toArray(String[]::new);
-
-            String dia = (String) JOptionPane.showInputDialog(
-                    null,
-                    "Seleccione el día:",
-                    "Nuevo horario",
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    diasSinDomingo,
-                    diasSinDomingo[0]);
-            if (dia == null)
-                return;
-
-            // Selección del turno
-            String turno = (String) JOptionPane.showInputDialog(
-                    null,
-                    "Seleccione el turno:",
-                    "Nuevo horario",
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    Gimnasio.TURNOS,
-                    Gimnasio.TURNOS[0]);
-            if (turno == null)
-                return;
-
-            // Validar si ya existe clase en ese horario
-            if (gimnasio.getClaseEnHorario(dia, turno) != null) {
-                JOptionPane.showMessageDialog(null, "Ya existe una clase asignada en ese horario.");
-                return;
-            }
-
-            // Selección cupo
-            String cupoTxt = JOptionPane.showInputDialog(null, "Cupo máximo de alumnos:");
-            if (cupoTxt == null)
-                return;
-            int cupo = Integer.parseInt(cupoTxt);
-            if (cupo <= 0) {
-                JOptionPane.showMessageDialog(null, "El cupo debe ser mayor a 0.");
-                return;
-            }
-
-            // Buscar entrenadores de esa especialidad
-            List<Entrenador> disponibles = new ArrayList<>();
-            for (Empleado e : gimnasio.getEmpleados()) {
-                if (e instanceof Entrenador) {
-                    Entrenador ent = (Entrenador) e;
-                    if (ent.getEspecialidad() != null && ent.getEspecialidad().equalsIgnoreCase(tipo)) {
-                        disponibles.add(ent);
-                    }
-                }
-            }
-
-            if (disponibles.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "No hay entrenadores disponibles para la especialidad: " + tipo);
-                return;
-            }
-
-            // Elegir entrenador
-            String[] opcionesEnt = new String[disponibles.size()];
-            for (int i = 0; i < disponibles.size(); i++) {
-                Entrenador ent = disponibles.get(i);
-                opcionesEnt[i] = ent.getDni() + " - " + ent.getNombre();
-            }
-
-            String seleccionado = (String) JOptionPane.showInputDialog(
-                    null,
-                    "Seleccione el entrenador:",
-                    "Entrenador",
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    opcionesEnt,
-                    opcionesEnt[0]);
-            if (seleccionado == null)
-                return;
-
-            // Obtener DNI seleccionado
-            int dniEntrenador = Integer.parseInt(seleccionado.split(" - ")[0]);
-            Entrenador entrenador = (Entrenador) gimnasio.buscarEmpleadoPorDni(dniEntrenador);
-
-            // Crear clase nueva
-            Clase nueva = new Clase(tipo, dia, turno, cupo, entrenador);
-
-            // Registrar clase
-            gimnasio.agregarClase(nueva);
-            entrenador.asignarClase(nueva);
-
-            // Actualizar grilla
-            actualizarGrilla();
-
-            JOptionPane.showMessageDialog(null, "Clase agregada correctamente.");
-
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(null, "Valor numérico inválido.");
-        }
-    }
-
     private void agregarSocioDesdeMenu() {
-        try {
-            String nombre = JOptionPane.showInputDialog(null, "Nombre del socio:");
-            if (nombre == null)
-                return;
-            if (nombre.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(null, "El nombre no puede estar vacío.");
-                return;
-            }
-            String apellido = JOptionPane.showInputDialog(null, "Apellido del socio:");
-            if (apellido == null)
-                return;
-            if (apellido.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(null, "El apellido no puede estar vacío.");
-                return;
-            }
-            String dniTxt = JOptionPane.showInputDialog(null, "DNI:");
-            if (dniTxt == null)
-                return;
-            int dni = Integer.parseInt(dniTxt);
-            if (gimnasio.buscarSocioPorDni(dni) != null) {
-                JOptionPane.showMessageDialog(null, "Ya existe un socio con ese DNI.");
-                return;
-            }
-            String membresia = JOptionPane.showInputDialog(null, "Tipo de membresía (ej: Premium):");
-            if (membresia == null || membresia.trim().isEmpty()) {
-                membresia = "Estándar";
-            }
-            String nroCuenta = JOptionPane.showInputDialog(null, "Nro de cuenta bancaria del socio (opcional):");
-            if (nroCuenta == null || nroCuenta.trim().isEmpty()) {
-                nroCuenta = "000" + dni;
-            }
-            // Seleccionar duración de plan
-            String[] opcionesPlan = { "1", "3", "6", "12" };
-            String elegidoPlan = (String) JOptionPane.showInputDialog(null, "Seleccione duración del plan (meses):",
-                    "Plan", JOptionPane.QUESTION_MESSAGE, null, opcionesPlan, opcionesPlan[0]);
-            int mesesPlan = 1;
-            if (elegidoPlan != null) {
+        JTextField txtNombre = new JTextField();
+        JTextField txtApellido = new JTextField();
+        JTextField txtDni = new JTextField();
+        String[] membresias = { "Estándar", "Premium", "Platinum", "Básico" };
+        JComboBox<String> cmbMembresia = new JComboBox<>(membresias);
+        JTextField txtCuenta = new JTextField();
+        String[] planes = { "1 mes", "3 meses", "6 meses", "12 meses" };
+        JComboBox<String> cmbPlan = new JComboBox<>(planes);
+
+        JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+        panel.add(new JLabel("Nombre:"));
+        panel.add(txtNombre);
+        panel.add(new JLabel("Apellido:"));
+        panel.add(txtApellido);
+        panel.add(new JLabel("DNI:"));
+        panel.add(txtDni);
+        panel.add(new JLabel("Membresía:"));
+        panel.add(cmbMembresia);
+        panel.add(new JLabel("Nro Cuenta (Opcional):"));
+        panel.add(txtCuenta);
+        panel.add(new JLabel("Duración Plan:"));
+        panel.add(cmbPlan);
+
+        while (true) {
+            int result = JOptionPane.showConfirmDialog(null, panel, "Agregar Socio",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (result == JOptionPane.OK_OPTION) {
                 try {
-                    mesesPlan = Integer.parseInt(elegidoPlan);
-                } catch (NumberFormatException ex) {
-                    mesesPlan = 1;
+                    String nombre = txtNombre.getText().trim();
+                    String apellido = txtApellido.getText().trim();
+                    String dniStr = txtDni.getText().trim();
+
+                    if (nombre.isEmpty() || apellido.isEmpty() || dniStr.isEmpty()) {
+                        throw new Exception("Todos los campos obligatorios deben completarse.");
+                    }
+
+                    int dni = Integer.parseInt(dniStr);
+                    if (gimnasio.buscarSocioPorDni(dni) != null) {
+                        throw new Exception("Ya existe un socio con ese DNI.");
+                    }
+
+                    String membresia = (String) cmbMembresia.getSelectedItem();
+                    String planStr = (String) cmbPlan.getSelectedItem();
+                    int meses = Integer.parseInt(planStr.split(" ")[0]);
+
+                    String nroCuenta = txtCuenta.getText().trim();
+                    if (nroCuenta.isEmpty())
+                        nroCuenta = "000" + dni;
+
+                    CuentaBancaria cuentaSocio = new CuentaBancaria(nroCuenta, 0, nombre + " " + apellido);
+                    Socio socio = new Socio(nombre, apellido, dni, membresia, null, cuentaSocio, new java.util.Date(),
+                            new java.util.Date(), true, planStr, meses);
+
+                    gimnasio.agregarSocio(socio);
+                    JOptionPane.showMessageDialog(null, "Socio agregado exitosamente.");
+                    break;
+
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(null, "Error: El DNI debe ser numérico.");
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
                 }
+            } else {
+                break;
             }
-            CuentaBancaria cuentaSocio = new CuentaBancaria(nroCuenta, 0, nombre + " " + apellido);
-            Socio socio = new Socio(nombre, apellido, dni, membresia, null, cuentaSocio, new java.util.Date(),
-                    new java.util.Date(), true, mesesPlan + " meses", mesesPlan);
-            gimnasio.agregarSocio(socio);
-            JOptionPane.showMessageDialog(null, "Socio agregado: " + socio.getNombre() + " " + socio.getApellido());
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(null, "Datos numéricos inválidos.");
         }
     }
 
@@ -607,144 +564,221 @@ public class InterfazGimnasio {
                 JOptionPane.showMessageDialog(null, "No se encontró socio con DNI " + dni);
                 return;
             }
-            String nombre = JOptionPane.showInputDialog(null, "Nombre:", s.getNombre());
-            if (nombre != null && !nombre.trim().isEmpty()) {
-                s.setNombre(nombre);
+
+            JTextField txtNombre = new JTextField(s.getNombre());
+            JTextField txtApellido = new JTextField(s.getApellido());
+            String[] membresias = { "Estándar", "Premium", "Platinum", "Básico" };
+            JComboBox<String> cmbMembresia = new JComboBox<>(membresias);
+            cmbMembresia.setSelectedItem(s.getMembresia());
+
+            JTextField txtCuenta = new JTextField(s.getCuenta() != null ? s.getCuenta().getNroCuenta() : "");
+
+            String[] planes = { "1 mes", "3 meses", "6 meses", "12 meses" };
+            JComboBox<String> cmbPlan = new JComboBox<>(planes);
+            // Intentar seleccionar el plan actual
+            for (String p : planes) {
+                if (p.startsWith(String.valueOf(s.getPlanMeses()))) {
+                    cmbPlan.setSelectedItem(p);
+                    break;
+                }
             }
-            String apellido = JOptionPane.showInputDialog(null, "Apellido:", s.getApellido());
-            if (apellido != null && !apellido.trim().isEmpty()) {
-                s.setApellido(apellido);
-            }
-            String nroCuenta = JOptionPane.showInputDialog(null, "Nro de cuenta bancaria:",
-                    (s.getCuenta() != null ? s.getCuenta().getNroCuenta() : ""));
-            if (nroCuenta != null && !nroCuenta.trim().isEmpty()) {
-                if (s.getCuenta() == null) {
-                    s.setCuenta(new CuentaBancaria(nroCuenta, 0, s.getNombre() + " " + s.getApellido()));
+
+            JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+            panel.add(new JLabel("Nombre:"));
+            panel.add(txtNombre);
+            panel.add(new JLabel("Apellido:"));
+            panel.add(txtApellido);
+            panel.add(new JLabel("Membresía:"));
+            panel.add(cmbMembresia);
+            panel.add(new JLabel("Nro Cuenta:"));
+            panel.add(txtCuenta);
+            panel.add(new JLabel("Duración Plan:"));
+            panel.add(cmbPlan);
+
+            while (true) {
+                int result = JOptionPane.showConfirmDialog(null, panel, "Modificar Socio",
+                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                if (result == JOptionPane.OK_OPTION) {
+                    try {
+                        String nombre = txtNombre.getText().trim();
+                        String apellido = txtApellido.getText().trim();
+                        if (nombre.isEmpty() || apellido.isEmpty()) {
+                            throw new Exception("Nombre y Apellido son obligatorios.");
+                        }
+
+                        s.setNombre(nombre);
+                        s.setApellido(apellido);
+                        s.setMembresia((String) cmbMembresia.getSelectedItem());
+
+                        String planStr = (String) cmbPlan.getSelectedItem();
+                        int meses = Integer.parseInt(planStr.split(" ")[0]);
+                        s.setPlanMeses(meses);
+                        s.setPlan(planStr);
+
+                        String nroCuenta = txtCuenta.getText().trim();
+                        if (!nroCuenta.isEmpty()) {
+                            if (s.getCuenta() == null) {
+                                s.setCuenta(new CuentaBancaria(nroCuenta, 0, nombre + " " + apellido));
+                            } else {
+                                s.getCuenta().setNroCuenta(nroCuenta);
+                            }
+                        }
+
+                        gimnasio.registrarModificacionSocio(s);
+                        JOptionPane.showMessageDialog(null, "Socio actualizado exitosamente.");
+                        break;
+                    } catch (Exception e) {
+                        JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
+                    }
                 } else {
-                    s.getCuenta().setNroCuenta(nroCuenta);
+                    break;
                 }
             }
-            String[] opcionesPlan = { "1", "3", "6", "12" };
-            String elegidoPlan = (String) JOptionPane.showInputDialog(null, "Seleccione duración del plan (meses):",
-                    "Plan", JOptionPane.QUESTION_MESSAGE, null, opcionesPlan,
-                    String.valueOf(s.getPlanMeses() > 0 ? s.getPlanMeses() : "1"));
-            if (elegidoPlan != null) {
-                try {
-                    int meses = Integer.parseInt(elegidoPlan);
-                    s.setPlanMeses(meses);
-                    s.setPlan(meses + " meses");
-                } catch (NumberFormatException ex) {
-                    // Si no se puede parsear, no modificar planMeses
-                }
-            }
-            JOptionPane.showMessageDialog(null, "Socio actualizado.");
-            gimnasio.registrarModificacionSocio(s);
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(null, "DNI inválido.");
         }
     }
 
     private void agregarEmpleadoDesdeMenu() {
-        try {
-            String[] tiposEmpleado = { "Entrenador", "Limpieza" };
-            String tipo = (String) JOptionPane.showInputDialog(null, "Tipo de empleado:", "Tipo",
-                    JOptionPane.QUESTION_MESSAGE, null, tiposEmpleado, tiposEmpleado[0]);
-            if (tipo == null)
-                return;
-            String nombre = JOptionPane.showInputDialog(null, "Nombre:");
-            if (nombre == null)
-                return;
-            if (nombre.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(null, "El nombre no puede estar vacío.");
-                return;
-            }
-            String apellido = JOptionPane.showInputDialog(null, "Apellido:");
-            if (apellido == null)
-                return;
-            if (apellido.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(null, "El apellido no puede estar vacío.");
-                return;
-            }
-            String dniTxt = JOptionPane.showInputDialog(null, "DNI:");
-            if (dniTxt == null)
-                return;
-            int dni = Integer.parseInt(dniTxt);
-            if (gimnasio.buscarEmpleadoPorDni(dni) != null) {
-                JOptionPane.showMessageDialog(null, "Ya existe un empleado con ese DNI.");
-                return;
-            }
-            String sexo = JOptionPane.showInputDialog(null, "Sexo (M/F):");
-            if (sexo == null || sexo.trim().isEmpty()) {
-                sexo = "N"; // N = No especificado
-            }
-            String sueldoTxt = JOptionPane.showInputDialog(null, "Sueldo:");
-            double sueldo = 0;
-            if (sueldoTxt != null && !sueldoTxt.trim().isEmpty()) {
-                sueldo = Double.parseDouble(sueldoTxt);
-            }
-            if (tipo.equalsIgnoreCase("Entrenador")) {
-                String especialidad = (String) JOptionPane.showInputDialog(null, "Especialidad:", "Especialidad",
-                        JOptionPane.QUESTION_MESSAGE, null, Gimnasio.TIPOS_CLASE, Gimnasio.TIPOS_CLASE[0]);
-                String fechaTxt = JOptionPane.showInputDialog(null, "Fecha de nacimiento (dd/MM/yyyy) (opcional):");
-                java.util.Date fechaNac = new java.util.Date();
-                if (fechaTxt != null && !fechaTxt.trim().isEmpty()) {
-                    try {
-                        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                        fechaNac = sdf.parse(fechaTxt);
-                    } catch (Exception ex) {
-                        fechaNac = new java.util.Date();
+        String[] tipos = { "Entrenador", "Limpieza" };
+        JComboBox<String> cmbTipo = new JComboBox<>(tipos);
+        JTextField txtNombre = new JTextField();
+        JTextField txtApellido = new JTextField();
+        JTextField txtDni = new JTextField();
+        String[] sexos = { "M", "F", "X" };
+        JComboBox<String> cmbSexo = new JComboBox<>(sexos);
+        JTextField txtSueldo = new JTextField();
+
+        // Campos específicos
+        JComboBox<String> cmbEspecialidad = new JComboBox<>(Gimnasio.TIPOS_CLASE);
+        JTextField txtHorario = new JTextField();
+        JTextField txtSector = new JTextField();
+
+        JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+        panel.add(new JLabel("Tipo de Empleado:"));
+        panel.add(cmbTipo);
+        panel.add(new JLabel("Nombre:"));
+        panel.add(txtNombre);
+        panel.add(new JLabel("Apellido:"));
+        panel.add(txtApellido);
+        panel.add(new JLabel("DNI:"));
+        panel.add(txtDni);
+        panel.add(new JLabel("Sexo:"));
+        panel.add(cmbSexo);
+        panel.add(new JLabel("Sueldo:"));
+        panel.add(txtSueldo);
+
+        panel.add(new JLabel("--- Entrenador ---"));
+        panel.add(new JLabel(""));
+        panel.add(new JLabel("Especialidad:"));
+        panel.add(cmbEspecialidad);
+
+        panel.add(new JLabel("--- Limpieza ---"));
+        panel.add(new JLabel(""));
+        panel.add(new JLabel("Horario:"));
+        panel.add(txtHorario);
+        panel.add(new JLabel("Sector:"));
+        panel.add(txtSector);
+
+        // Listener para habilitar/deshabilitar según tipo
+        java.awt.event.ActionListener updateFields = e -> {
+            boolean isEntrenador = "Entrenador".equals(cmbTipo.getSelectedItem());
+            cmbEspecialidad.setEnabled(isEntrenador);
+            txtHorario.setEnabled(!isEntrenador);
+            txtSector.setEnabled(!isEntrenador);
+        };
+        cmbTipo.addActionListener(updateFields);
+        updateFields.actionPerformed(null); // Estado inicial
+
+        while (true) {
+            int result = JOptionPane.showConfirmDialog(null, panel, "Agregar Empleado",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+            if (result == JOptionPane.OK_OPTION) {
+                try {
+                    String nombre = txtNombre.getText().trim();
+                    String apellido = txtApellido.getText().trim();
+                    String dniStr = txtDni.getText().trim();
+                    String sueldoStr = txtSueldo.getText().trim();
+
+                    if (nombre.isEmpty() || apellido.isEmpty() || dniStr.isEmpty() || sueldoStr.isEmpty()) {
+                        throw new Exception("Complete los campos obligatorios.");
                     }
+
+                    int dni = Integer.parseInt(dniStr);
+                    if (gimnasio.buscarEmpleadoPorDni(dni) != null) {
+                        throw new Exception("Ya existe un empleado con ese DNI.");
+                    }
+
+                    double sueldo = Double.parseDouble(sueldoStr);
+                    String sexo = (String) cmbSexo.getSelectedItem();
+                    String tipo = (String) cmbTipo.getSelectedItem();
+
+                    if ("Entrenador".equals(tipo)) {
+                        String especialidad = (String) cmbEspecialidad.getSelectedItem();
+                        Entrenador ent = new Entrenador(nombre, apellido, dni, sexo, new java.util.Date(), sueldo,
+                                especialidad, null);
+                        gimnasio.agregarEmpleado(ent);
+                    } else {
+                        String horario = txtHorario.getText().trim();
+                        String sector = txtSector.getText().trim();
+                        if (horario.isEmpty() || sector.isEmpty()) {
+                            throw new Exception("Para Limpieza, Horario y Sector son obligatorios.");
+                        }
+                        Limpieza limp = new Limpieza(nombre, apellido, dni, sexo, new java.util.Date(), sueldo, horario,
+                                sector);
+                        gimnasio.agregarEmpleado(limp);
+                    }
+
+                    JOptionPane.showMessageDialog(null, "Empleado agregado exitosamente.");
+                    break;
+
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(null, "Error: DNI y Sueldo deben ser numéricos.");
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
                 }
-                Entrenador entrenador = new Entrenador(nombre, apellido, dni, sexo, fechaNac, sueldo, especialidad,
-                        null);
-                gimnasio.agregarEmpleado(entrenador);
-                JOptionPane.showMessageDialog(null, "Entrenador agregado: " + entrenador.getNombre());
             } else {
-                String fechaTxt = JOptionPane.showInputDialog(null, "Fecha de nacimiento (dd/MM/yyyy) (opcional):");
-                java.util.Date fechaNac = new java.util.Date();
-                if (fechaTxt != null && !fechaTxt.trim().isEmpty()) {
-                    try {
-                        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                        fechaNac = sdf.parse(fechaTxt);
-                    } catch (Exception ex) {
-                        fechaNac = new java.util.Date();
-                    }
-                }
-                String horario = JOptionPane.showInputDialog(null, "Horario de trabajo (ej. 08:00-12:00):");
-                if (horario == null)
-                    return;
-                String sector = JOptionPane.showInputDialog(null, "Sector:");
-                if (sector == null)
-                    return;
-                Limpieza limp = new Limpieza(nombre, apellido, dni, sexo, fechaNac, sueldo, horario, sector);
-                gimnasio.agregarEmpleado(limp);
-                JOptionPane.showMessageDialog(null, "Personal de limpieza agregado: " + limp.getNombre());
+                break;
             }
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(null, "Datos numéricos inválidos.");
         }
     }
 
     private void eliminarEmpleadoPorDni() {
+        if (gimnasio.getEmpleados().isEmpty()) {
+            JOptionPane.showMessageDialog(null, "No hay empleados para eliminar.");
+            return;
+        }
+
+        java.util.List<Empleado> empleados = gimnasio.getEmpleados();
+        String[] opciones = new String[empleados.size()];
+        for (int i = 0; i < empleados.size(); i++) {
+            Empleado e = empleados.get(i);
+            opciones[i] = e.getDni() + " - " + e.getNombre() + " " + e.getApellido();
+        }
+
+        String seleccionado = (String) JOptionPane.showInputDialog(null,
+                "Seleccione el empleado a eliminar:", "Eliminar Empleado",
+                JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
+
+        if (seleccionado == null)
+            return;
+
         try {
-            String dniTxt = JOptionPane.showInputDialog(null, "Ingrese DNI del empleado a eliminar:");
-            if (dniTxt == null)
-                return;
-            int dni = Integer.parseInt(dniTxt);
+            int dni = Integer.parseInt(seleccionado.split(" - ")[0]);
             Empleado e = gimnasio.buscarEmpleadoPorDni(dni);
-            if (e == null) {
-                JOptionPane.showMessageDialog(null, "No se encontró empleado con DNI " + dni);
-                return;
+
+            if (e != null) {
+                int confirm = JOptionPane.showConfirmDialog(null,
+                        "¿Confirma eliminar a " + e.getNombre() + " " + e.getApellido() + "?", "Confirmar eliminación",
+                        JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    gimnasio.eliminarEmpleado(e);
+                    JOptionPane.showMessageDialog(null, "Empleado eliminado.");
+                }
             }
-            int confirm = JOptionPane.showConfirmDialog(null,
-                    "¿Confirma eliminar a " + e.getNombre() + " " + e.getApellido() + "?", "Confirmar eliminación",
-                    JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                gimnasio.eliminarEmpleado(e);
-                JOptionPane.showMessageDialog(null, "Empleado eliminado.");
-            }
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(null, "DNI inválido.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, "Error al procesar la selección.");
         }
     }
 
@@ -754,52 +788,181 @@ public class InterfazGimnasio {
             if (dniTxt == null)
                 return;
             int dni = Integer.parseInt(dniTxt);
+
             Empleado e = gimnasio.buscarEmpleadoPorDni(dni);
             if (e == null) {
                 JOptionPane.showMessageDialog(null, "No se encontró empleado con DNI " + dni);
                 return;
             }
-            String nombre = JOptionPane.showInputDialog(null, "Nombre:", e.getNombre());
-            if (nombre != null && !nombre.trim().isEmpty()) {
-                e.setNombre(nombre);
-            }
-            String apellido = JOptionPane.showInputDialog(null, "Apellido:", e.getApellido());
-            if (apellido != null && !apellido.trim().isEmpty()) {
-                e.setApellido(apellido);
-            }
-            String sexo = JOptionPane.showInputDialog(null, "Sexo (M/F):", e.getSexo());
-            if (sexo != null && !sexo.trim().isEmpty()) {
-                e.setSexo(sexo);
-            }
-            String sueldoTxt = JOptionPane.showInputDialog(null, "Sueldo:", String.valueOf(e.getSueldo()));
-            if (sueldoTxt != null && !sueldoTxt.trim().isEmpty()) {
-                try {
-                    e.setSueldo(Double.parseDouble(sueldoTxt));
-                } catch (NumberFormatException ex) {
-                    // si ingreso inválido, no cambiar sueldo
-                }
-            }
+
+            JTextField txtNombre = new JTextField(e.getNombre());
+            JTextField txtApellido = new JTextField(e.getApellido());
+            String[] sexos = { "M", "F", "X" };
+            JComboBox<String> cmbSexo = new JComboBox<>(sexos);
+            cmbSexo.setSelectedItem(e.getSexo());
+            JTextField txtSueldo = new JTextField(String.valueOf(e.getSueldo()));
+
+            // Campos específicos
+            JComboBox<String> cmbEspecialidad = new JComboBox<>(Gimnasio.TIPOS_CLASE);
+            JTextField txtHorario = new JTextField();
+            JTextField txtSector = new JTextField();
+
+            JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+            panel.add(new JLabel("Nombre:"));
+            panel.add(txtNombre);
+            panel.add(new JLabel("Apellido:"));
+            panel.add(txtApellido);
+            panel.add(new JLabel("Sexo:"));
+            panel.add(cmbSexo);
+            panel.add(new JLabel("Sueldo:"));
+            panel.add(txtSueldo);
+
             if (e instanceof Entrenador) {
                 Entrenador ent = (Entrenador) e;
-                String especialidad = JOptionPane.showInputDialog(null, "Especialidad:", ent.getEspecialidad());
-                if (especialidad != null && !especialidad.trim().isEmpty()) {
-                    ent.setEspecialidad(especialidad);
-                }
+                cmbEspecialidad.setSelectedItem(ent.getEspecialidad());
+                panel.add(new JLabel("Especialidad:"));
+                panel.add(cmbEspecialidad);
             } else if (e instanceof Limpieza) {
                 Limpieza limp = (Limpieza) e;
-                String horario = JOptionPane.showInputDialog(null, "Horario de trabajo:", limp.getHorarioTrabajo());
-                if (horario != null && !horario.trim().isEmpty()) {
-                    limp.setHorarioTrabajo(horario);
-                }
-                String sector = JOptionPane.showInputDialog(null, "Sector:", limp.getSector());
-                if (sector != null && !sector.trim().isEmpty()) {
-                    limp.setSector(sector);
+                txtHorario.setText(limp.getHorarioTrabajo());
+                txtSector.setText(limp.getSector());
+                panel.add(new JLabel("Horario:"));
+                panel.add(txtHorario);
+                panel.add(new JLabel("Sector:"));
+                panel.add(txtSector);
+            }
+
+            while (true) {
+                int result = JOptionPane.showConfirmDialog(null, panel, "Modificar Empleado",
+                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                if (result == JOptionPane.OK_OPTION) {
+                    try {
+                        String nombre = txtNombre.getText().trim();
+                        String apellido = txtApellido.getText().trim();
+                        String sueldoStr = txtSueldo.getText().trim();
+
+                        if (nombre.isEmpty() || apellido.isEmpty() || sueldoStr.isEmpty()) {
+                            throw new Exception("Complete los campos obligatorios.");
+                        }
+
+                        e.setNombre(nombre);
+                        e.setApellido(apellido);
+                        e.setSexo((String) cmbSexo.getSelectedItem());
+                        e.setSueldo(Double.parseDouble(sueldoStr));
+
+                        if (e instanceof Entrenador) {
+                            ((Entrenador) e).setEspecialidad((String) cmbEspecialidad.getSelectedItem());
+                        } else if (e instanceof Limpieza) {
+                            String horario = txtHorario.getText().trim();
+                            String sector = txtSector.getText().trim();
+                            if (horario.isEmpty() || sector.isEmpty())
+                                throw new Exception("Horario y Sector son obligatorios.");
+                            ((Limpieza) e).setHorarioTrabajo(horario);
+                            ((Limpieza) e).setSector(sector);
+                        }
+
+                        gimnasio.registrarModificacionEmpleado(e);
+                        JOptionPane.showMessageDialog(null, "Empleado actualizado exitosamente.");
+                        break;
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(null, "El sueldo debe ser numérico.");
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage());
+                    }
+                } else {
+                    break;
                 }
             }
-            JOptionPane.showMessageDialog(null, "Empleado actualizado.");
-            gimnasio.registrarModificacionEmpleado(e);
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(null, "DNI inválido.");
+        }
+    }
+
+    private void agregarClaseDesdeMenu() {
+        JComboBox<String> cmbTipo = new JComboBox<>(Gimnasio.TIPOS_CLASE);
+
+        String[] diasSinDomingo = java.util.Arrays.stream(Gimnasio.DIAS_SEMANA)
+                .filter(d -> !d.equalsIgnoreCase("Domingo"))
+                .toArray(String[]::new);
+        JComboBox<String> cmbDia = new JComboBox<>(diasSinDomingo);
+        JComboBox<String> cmbTurno = new JComboBox<>(Gimnasio.TURNOS);
+        JTextField txtCupo = new JTextField("20");
+        JComboBox<String> cmbEntrenador = new JComboBox<>();
+
+        JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+        panel.add(new JLabel("Tipo de Clase:"));
+        panel.add(cmbTipo);
+        panel.add(new JLabel("Día:"));
+        panel.add(cmbDia);
+        panel.add(new JLabel("Turno:"));
+        panel.add(cmbTurno);
+        panel.add(new JLabel("Cupo Máximo:"));
+        panel.add(txtCupo);
+        panel.add(new JLabel("Entrenador:"));
+        panel.add(cmbEntrenador);
+
+        // Actualizar entrenadores al cambiar tipo
+        java.awt.event.ActionListener updateTrainers = e -> {
+            cmbEntrenador.removeAllItems();
+            String tipo = (String) cmbTipo.getSelectedItem();
+            for (Empleado emp : gimnasio.getEmpleados()) {
+                if (emp instanceof Entrenador) {
+                    Entrenador ent = (Entrenador) emp;
+                    if (ent.getEspecialidad() != null && ent.getEspecialidad().equalsIgnoreCase(tipo)) {
+                        cmbEntrenador.addItem(ent.getDni() + " - " + ent.getNombre());
+                    }
+                }
+            }
+        };
+        cmbTipo.addActionListener(updateTrainers);
+        updateTrainers.actionPerformed(null); // Carga inicial
+
+        while (true) {
+            int result = JOptionPane.showConfirmDialog(null, panel, "Agregar Clase",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+            if (result == JOptionPane.OK_OPTION) {
+                try {
+                    String tipo = (String) cmbTipo.getSelectedItem();
+                    String dia = (String) cmbDia.getSelectedItem();
+                    String turno = (String) cmbTurno.getSelectedItem();
+                    String cupoStr = txtCupo.getText().trim();
+                    String entSel = (String) cmbEntrenador.getSelectedItem();
+
+                    if (cupoStr.isEmpty())
+                        throw new Exception("El cupo es obligatorio.");
+                    int cupo = Integer.parseInt(cupoStr);
+                    if (cupo <= 0)
+                        throw new Exception("El cupo debe ser mayor a 0.");
+
+                    if (gimnasio.getClaseEnHorario(dia, turno) != null) {
+                        throw new Exception("Ya existe una clase en ese horario.");
+                    }
+
+                    if (entSel == null) {
+                        throw new Exception(
+                                "Debe seleccionar un entrenador. Si no hay, agregue uno con esa especialidad primero.");
+                    }
+
+                    int dniEnt = Integer.parseInt(entSel.split(" - ")[0]);
+                    Entrenador entrenador = (Entrenador) gimnasio.buscarEmpleadoPorDni(dniEnt);
+
+                    Clase nueva = new Clase(tipo, dia, turno, cupo, entrenador);
+                    gimnasio.agregarClase(nueva);
+                    entrenador.asignarClase(nueva);
+                    actualizarGrilla();
+
+                    JOptionPane.showMessageDialog(null, "Clase agregada exitosamente.");
+                    break;
+
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(null, "Error: El cupo debe ser numérico.");
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
+                }
+            } else {
+                break;
+            }
         }
     }
 
@@ -890,29 +1053,45 @@ public class InterfazGimnasio {
     }
 
     private void pagarSueldoEmpleadoDesdeMenu() {
+        if (gimnasio.getEmpleados().isEmpty()) {
+            JOptionPane.showMessageDialog(null, "No hay empleados cargados.");
+            return;
+        }
+
+        if (gimnasio.getCuenta() == null) {
+            JOptionPane.showMessageDialog(null, "No hay cuenta bancaria del gimnasio asignada.");
+            return;
+        }
+
+        java.util.List<Empleado> empleados = gimnasio.getEmpleados();
+        String[] opciones = new String[empleados.size()];
+        for (int i = 0; i < empleados.size(); i++) {
+            Empleado e = empleados.get(i);
+            opciones[i] = e.getDni() + " - " + e.getNombre() + " " + e.getApellido();
+        }
+
+        String seleccionado = (String) JOptionPane.showInputDialog(null,
+                "Seleccione el empleado a pagar sueldo:", "Pagar Sueldo",
+                JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
+
+        if (seleccionado == null)
+            return;
+
         try {
-            String dniTxt = JOptionPane.showInputDialog(null, "Ingrese DNI del empleado a pagar sueldo:");
-            if (dniTxt == null)
-                return;
-            int dni = Integer.parseInt(dniTxt);
+            int dni = Integer.parseInt(seleccionado.split(" - ")[0]);
             Empleado e = gimnasio.buscarEmpleadoPorDni(dni);
-            if (e == null) {
-                JOptionPane.showMessageDialog(null, "No se encontró empleado con DNI " + dni);
-                return;
+
+            if (e != null) {
+                // Usar registrarPagoSueldo para que se guarde en registros.txt
+                boolean pagado = gimnasio.registrarPagoSueldo(e);
+                if (pagado) {
+                    JOptionPane.showMessageDialog(null, "Sueldo pagado a " + e.getNombre() + " " + e.getApellido());
+                } else {
+                    JOptionPane.showMessageDialog(null, "No se pudo pagar el sueldo. Fondos insuficientes.");
+                }
             }
-            if (gimnasio.getCuenta() == null) {
-                JOptionPane.showMessageDialog(null, "No hay cuenta bancaria del gimnasio asignada.");
-                return;
-            }
-            // Usar registrarPagoSueldo para que se guarde en registros.txt
-            boolean pagado = gimnasio.registrarPagoSueldo(e);
-            if (pagado) {
-                JOptionPane.showMessageDialog(null, "Sueldo pagado a " + e.getNombre() + " " + e.getApellido());
-            } else {
-                JOptionPane.showMessageDialog(null, "No se pudo pagar el sueldo. Fondos insuficientes.");
-            }
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(null, "DNI inválido.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, "Error al procesar la selección.");
         }
     }
 

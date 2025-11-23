@@ -69,6 +69,82 @@ public class Socio {
         return false;
     }
 
+    public void agregarAlGimnasio(Gimnasio g) {
+        if (g != null && !g.sociosPorDni.containsKey(this.getDni())) {
+            g.socios.add(this);
+            g.sociosPorDni.put(this.getDni(), this);
+            // No creamos registro de evento para persistencia, solo para historial si se
+            // desea
+            // Pero la persistencia ahora es por estado
+            g.guardarSocios();
+        }
+    }
+
+    public void eliminarDelGimnasio(Gimnasio g) {
+        if (g != null && g.socios.remove(this)) {
+            g.sociosPorDni.remove(this.getDni());
+            g.guardarSocios();
+        }
+    }
+
+    public String toCSV() {
+        String nroCuenta = (cuenta != null) ? cuenta.getNroCuenta() : "null";
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String fechaInsc = (fechaInscripcion != null) ? sdf.format(fechaInscripcion) : "null";
+        String fechaVenc = (fechaVencimientoPlan != null) ? sdf.format(fechaVencimientoPlan) : "null";
+        return dni + ";" + nombre + ";" + apellido + ";" + membresia + ";" + planMeses + ";" + nroCuenta + ";"
+                + fechaInsc + ";" + fechaVenc;
+    }
+
+    public static Socio fromCSV(String linea) {
+        String[] datos = linea.split(";");
+        if (datos.length >= 6) {
+            int dni = Integer.parseInt(datos[0]);
+            String nombre = datos[1];
+            String apellido = datos[2];
+            String membresia = datos[3];
+            int planMeses = Integer.parseInt(datos[4]);
+            String nroCuenta = datos[5];
+
+            CuentaBancaria cb = null;
+            if (!nroCuenta.equals("null")) {
+                cb = new CuentaBancaria(nroCuenta, 0, nombre + " " + apellido);
+            }
+
+            // Parse dates if available (backward compatibility)
+            Date fechaInsc = null;
+            Date fechaVenc = null;
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            try {
+                if (datos.length >= 7 && !datos[6].equals("null")) {
+                    fechaInsc = sdf.parse(datos[6]);
+                }
+                if (datos.length >= 8 && !datos[7].equals("null")) {
+                    fechaVenc = sdf.parse(datos[7]);
+                }
+            } catch (Exception e) {
+                // If parsing fails, dates remain null
+            }
+
+            // If dates are null, set defaults
+            if (fechaInsc == null) {
+                fechaInsc = new Date();
+            }
+            if (fechaVenc == null) {
+                // Calculate expiration based on plan
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(fechaInsc);
+                cal.add(Calendar.MONTH, planMeses);
+                fechaVenc = cal.getTime();
+            }
+
+            Socio s = new Socio(nombre, apellido, dni, membresia, null, cb, fechaInsc, fechaVenc, false,
+                    planMeses + " meses", planMeses);
+            return s;
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         return "Socio{" +

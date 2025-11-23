@@ -3,7 +3,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Subclase de Empleado que representa a un Entrenador, con especialidad y clases asignadas.
+ * Subclase de Empleado que representa a un Entrenador, con especialidad y
+ * clases asignadas.
  */
 public class Entrenador extends Empleado {
 
@@ -11,8 +12,8 @@ public class Entrenador extends Empleado {
     private List<Clase> clasesAsignadas;
 
     public Entrenador(String nombre, String apellido, int dni, String sexo,
-                      Date fechaNacimiento, double sueldo,
-                      String especialidad, List<Clase> clasesAsignadas) {
+            Date fechaNacimiento, double sueldo,
+            String especialidad, List<Clase> clasesAsignadas) {
         super(nombre, apellido, dni, sexo, fechaNacimiento, sueldo);
         this.especialidad = especialidad;
         this.clasesAsignadas = crearListaInicial(clasesAsignadas);
@@ -22,6 +23,13 @@ public class Entrenador extends Empleado {
         if (c != null && !clasesAsignadas.contains(c)) {
             clasesAsignadas.add(c);
         }
+    }
+
+    @Override
+    public String toCSV() {
+        // tipo;dni;nombre;apellido;sexo;sueldo;especialidad
+        return "Entrenador;" + getDni() + ";" + getNombre() + ";" + getApellido() + ";" + getSexo() + ";" + getSueldo()
+                + ";" + especialidad;
     }
 
     @Override

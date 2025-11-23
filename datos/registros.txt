@@ -1,0 +1,15 @@
+GIMNASIO|Iron Gym|30123456|Av. Siempre Viva 742|Springfield|000-GYM-IRON|1660000.0
+1|22/11/2025 21:12:39|DEBE|Pago de sueldo a Arnold Schwarzenegger|50000.0|null
+2|22/11/2025 21:12:39|DEBE|Pago de sueldo a Consuela Perez|25000.0|null
+3|22/11/2025 21:12:39|HABER|Pago de cuota del socio Sofia Gonzalez|15000.0|null
+4|22/11/2025 21:12:39|HABER|Pago de cuota del socio Diego Garcia|15000.0|null
+5|22/11/2025 21:12:39|HABER|Pago de cuota del socio Luis Perez|15000.0|null
+6|22/11/2025 21:12:39|HABER|Pago de cuota del socio Miguel Garcia|15000.0|null
+7|22/11/2025 21:12:39|HABER|Pago de cuota del socio Maria Hernandez|15000.0|null
+8|22/11/2025 21:12:39|HABER|Pago de cuota del socio Elena Diaz|15000.0|null
+9|22/11/2025 21:12:39|HABER|Pago de cuota del socio Pedro Perez|15000.0|null
+10|22/11/2025 21:12:39|HABER|Pago de cuota del socio Elena Rodriguez|15000.0|null
+11|22/11/2025 21:12:39|HABER|Pago de cuota del socio Valentina Rodriguez|15000.0|null
+12|22/11/2025 21:12:39|HABER|Pago de cuota del socio Sofia Diaz|15000.0|null
+13|22/11/2025 21:15:06|HABER|Pago de cuota del socio Juan Garcia|35000.0|null
+14|22/11/2025 22:19:54|HABER|Pago de cuota del socio Juan Garcia|550000.0|SOCIO;30000000;Juan;Garcia;Estándar;6;00030000000

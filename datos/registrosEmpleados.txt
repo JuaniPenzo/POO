@@ -1,0 +1,8 @@
+Entrenador;10002;Ronda;Rousey;F;45000.0;Crossfit
+Entrenador;10003;Usain;Bolt;M;48000.0;Aerobico
+Entrenador;10004;Serena;Williams;F;52000.0;Funcional
+Entrenador;10005;Bruce;Lee;M;60000.0;Hyorx
+Limpieza;20001;Consuela;Perez;F;25000.0;Mañana;Vestuarios
+Limpieza;20002;Mario;Bros;M;25000.0;Tarde;Sala de Maquinas
+Limpieza;20003;Luigi;Bros;M;25000.0;Noche;Entrada y Pasillos
+Entrenador;42837383;licha;ortix;X;5000000.0;Zumba

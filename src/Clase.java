@@ -1,8 +1,10 @@
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
-/**Clase que representa una actividad o sesión dictada en el gimnasio*/
+/** Clase que representa una actividad o sesión dictada en el gimnasio */
 public class Clase {
 
     private String nombre;
@@ -12,7 +14,7 @@ public class Clase {
     private List<Socio> sociosInscriptos;
 
     public Clase(String nombre, String horario, int cupoMaximo,
-                 Entrenador entrenador, List<Socio> sociosInscriptos) {
+            Entrenador entrenador, List<Socio> sociosInscriptos) {
         this.nombre = nombre;
         this.horario = horario;
         this.cupoMaximo = cupoMaximo;
@@ -21,13 +23,12 @@ public class Clase {
     }
 
     public Clase(String nombre, String dia, String turno, int cupoMaximo, Entrenador entrenador) {
-    this.nombre = nombre;
-    this.horario = dia + " - " + turno; 
-    this.cupoMaximo = cupoMaximo;
-    this.entrenador = entrenador;
-    this.sociosInscriptos = new ArrayList<>();
-}
-
+        this.nombre = nombre;
+        this.horario = dia + " - " + turno;
+        this.cupoMaximo = cupoMaximo;
+        this.entrenador = entrenador;
+        this.sociosInscriptos = new ArrayList<>();
+    }
 
     public boolean agregarSocio(Socio s) {
         if (s == null) {
@@ -43,6 +44,58 @@ public class Clase {
 
     public boolean eliminarSocio(Socio s) {
         return sociosInscriptos.remove(s);
+    }
+
+    public void agregarAlGimnasio(Gimnasio g) {
+        if (g != null && !g.clasesPorHorario.containsKey(this.getHorario())) {
+            g.clases.add(this);
+            g.clasesPorHorario.put(this.getHorario(), this);
+            // Vincular clase con entrenador si corresponde
+            if (this.getEntrenador() != null) {
+                this.getEntrenador().asignarClase(this);
+            }
+            g.guardarClases();
+        }
+    }
+
+    public void eliminarDelGimnasio(Gimnasio g) {
+        if (g != null && g.clases.remove(this)) {
+            g.clasesPorHorario.remove(this.getHorario());
+            if (this.getEntrenador() != null) {
+                this.getEntrenador().getClasesAsignadas().remove(this);
+            }
+            g.guardarClases();
+        }
+    }
+
+    public String toCSV() {
+        String dniEntrenador = (entrenador != null) ? String.valueOf(entrenador.getDni()) : "null";
+        return nombre + ";" + horario + ";" + cupoMaximo + ";" + dniEntrenador;
+    }
+
+    public static Clase fromCSV(String linea, Map<Integer, Empleado> empleados) {
+        String[] datos = linea.split(";");
+        if (datos.length >= 4) {
+            String nombre = datos[0];
+            String horario = datos[1];
+            int cupo = Integer.parseInt(datos[2]);
+            String dniEntStr = datos[3];
+
+            Entrenador ent = null;
+            if (!dniEntStr.equals("null") && empleados != null) {
+                Empleado emp = empleados.get(Integer.parseInt(dniEntStr));
+                if (emp instanceof Entrenador) {
+                    ent = (Entrenador) emp;
+                }
+            }
+
+            Clase c = new Clase(nombre, horario, cupo, ent, null);
+            if (ent != null) {
+                ent.asignarClase(c);
+            }
+            return c;
+        }
+        return null;
     }
 
     @Override

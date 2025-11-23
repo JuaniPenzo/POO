@@ -4,7 +4,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-/** Clase que representa una cuenta bancaria simple con saldo y registro de movimientos (débitos y créditos)*/
+/**
+ * Clase que representa una cuenta bancaria simple con saldo y registro de
+ * movimientos (débitos y créditos)
+ */
 public class CuentaBancaria {
 
     private String nroCuenta;
@@ -102,6 +105,50 @@ public class CuentaBancaria {
         if (extraer(monto, "Transferencia saliente a " + (destino != null ? destino.getNroCuenta() : "?"))) {
             destino.depositar(monto, "Transferencia entrante desde " + this.getNroCuenta());
         }
+    }
+
+    public boolean registrarPagoSueldo(Empleado e, Gimnasio g) {
+        if (e == null || g == null) {
+            return false;
+        }
+        boolean pagoRealizado = e.cobrarSueldo(this);
+        if (!pagoRealizado) {
+            return false;
+        }
+        Registro registro = new Registro(
+                g.registros.size() + 1,
+                new Date(),
+                "DEBE",
+                "Pago de sueldo a " + e.getNombre() + " " + e.getApellido(),
+                e.getSueldo(),
+                null,
+                e,
+                null);
+        g.registros.add(registro);
+        g.guardarEstadoCompleto();
+        return true;
+    }
+
+    public boolean registrarPagoSocio(Socio s, double monto, Gimnasio g) {
+        if (s == null || g == null) {
+            return false;
+        }
+        boolean pagoRealizado = s.pagarCuota(monto, this);
+        if (!pagoRealizado) {
+            return false;
+        }
+        Registro registro = new Registro(
+                g.registros.size() + 1,
+                new Date(),
+                "HABER",
+                "Pago de cuota del socio " + s.getNombre() + " " + s.getApellido(),
+                monto,
+                s,
+                null,
+                null);
+        g.registros.add(registro);
+        g.guardarEstadoCompleto();
+        return true;
     }
 
     public double mostrarSaldo() {

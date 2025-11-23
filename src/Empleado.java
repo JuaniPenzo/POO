@@ -2,7 +2,8 @@ import java.util.Calendar;
 import java.util.Date;
 
 /**
- * Clase abstracta que representa un empleado genérico del gimnasio (modelo base para distintos tipos de empleados).
+ * Clase abstracta que representa un empleado genérico del gimnasio (modelo base
+ * para distintos tipos de empleados).
  */
 public abstract class Empleado {
 
@@ -14,7 +15,7 @@ public abstract class Empleado {
     private double sueldo;
 
     public Empleado(String nombre, String apellido, int dni, String sexo,
-                    Date fechaNacimiento, double sueldo) {
+            Date fechaNacimiento, double sueldo) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.dni = dni;
@@ -24,7 +25,8 @@ public abstract class Empleado {
     }
 
     public int calcularEdad() {
-        if (fechaNacimiento == null) return 0;
+        if (fechaNacimiento == null)
+            return 0;
 
         Calendar hoy = Calendar.getInstance();
         Calendar fnac = Calendar.getInstance();
@@ -47,7 +49,47 @@ public abstract class Empleado {
         }
 
         // extraer y registrar el movimiento vinculando el empleado
-        return cuentaGimnasio.extraer(sueldo, "Pago de sueldo a " + this.getNombre() + " (DNI:" + this.getDni() + ")", null, this, null);
+        return cuentaGimnasio.extraer(sueldo, "Pago de sueldo a " + this.getNombre() + " (DNI:" + this.getDni() + ")",
+                null, this, null);
+    }
+
+    public void agregarAlGimnasio(Gimnasio g) {
+        if (g != null && !g.empleadosPorDni.containsKey(this.getDni())) {
+            g.empleados.add(this);
+            g.empleadosPorDni.put(this.getDni(), this);
+            g.guardarEmpleados();
+        }
+    }
+
+    public void eliminarDelGimnasio(Gimnasio g) {
+        if (g != null && g.empleados.remove(this)) {
+            g.empleadosPorDni.remove(this.getDni());
+            g.guardarEmpleados();
+        }
+    }
+
+    public abstract String toCSV();
+
+    public static Empleado fromCSV(String linea) {
+        String[] datos = linea.split(";");
+        if (datos.length >= 7) {
+            String tipo = datos[0];
+            int dni = Integer.parseInt(datos[1]);
+            String nombre = datos[2];
+            String apellido = datos[3];
+            String sexo = datos[4];
+            double sueldo = Double.parseDouble(datos[5]);
+
+            if (tipo.equals("Entrenador")) {
+                String especialidad = datos[6];
+                return new Entrenador(nombre, apellido, dni, sexo, new Date(), sueldo, especialidad, null);
+            } else if (tipo.equals("Limpieza")) {
+                String horario = datos[6];
+                String sector = (datos.length > 7) ? datos[7] : "";
+                return new Limpieza(nombre, apellido, dni, sexo, new Date(), sueldo, horario, sector);
+            }
+        }
+        return null;
     }
 
     @Override
