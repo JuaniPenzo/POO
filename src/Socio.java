@@ -1,7 +1,6 @@
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -38,7 +37,7 @@ public class Socio {
         this.dni = dni;
         this.membresia = membresia;
         this.cuenta = cuenta;
-        this.clasesInscriptas = crearListaInicial(clasesInscriptas);
+        this.clasesInscriptas = clasesInscriptas != null ? clasesInscriptas : new ArrayList<>();
         this.fechaInscripcion = fechaInscripcion != null ? fechaInscripcion : new Date();
         this.fechaVencimientoPlan = fechaVencimientoPlan != null ? fechaVencimientoPlan : this.fechaInscripcion;
         this.activo = activo;
@@ -256,11 +255,4 @@ public class Socio {
         return sdf.format(fechaVencimientoPlan);
     }
 
-    public List<Clase> getClasesInscriptas() {
-        return Collections.unmodifiableList(clasesInscriptas);
-    }
-
-    private List<Clase> crearListaInicial(List<Clase> clases) {
-        return clases != null ? clases : new ArrayList<>();
-    }
 }

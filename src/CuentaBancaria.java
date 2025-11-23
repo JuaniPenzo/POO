@@ -98,15 +98,6 @@ public class CuentaBancaria {
         }
     }
 
-    public void transferir(double monto, CuentaBancaria destino) {
-        if (destino == null)
-            return;
-
-        if (extraer(monto, "Transferencia saliente a " + (destino != null ? destino.getNroCuenta() : "?"))) {
-            destino.depositar(monto, "Transferencia entrante desde " + this.getNroCuenta());
-        }
-    }
-
     public boolean registrarPagoSueldo(Empleado e, Gimnasio g) {
         if (e == null || g == null) {
             return false;
@@ -149,10 +140,6 @@ public class CuentaBancaria {
         g.registros.add(registro);
         g.guardarEstadoCompleto();
         return true;
-    }
-
-    public double mostrarSaldo() {
-        return saldo;
     }
 
     public double getSaldo() {

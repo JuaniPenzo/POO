@@ -4,7 +4,6 @@ Aerobico;Martes - Tarde;20;10003
 Musculacion;Miércoles - Mañana;20;null
 Crossfit;Miércoles - Tarde;15;10002
 Funcional;Jueves - Mañana;15;10004
-Aerobico;Jueves - Tarde;20;10003
 Zumba;Viernes - Tarde;25;10002
 Musculacion;Viernes - Noche;20;null
 Hyorx;Martes - Noche;20;10005

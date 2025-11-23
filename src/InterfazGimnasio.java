@@ -134,7 +134,7 @@ public class InterfazGimnasio {
             JOptionPane.showMessageDialog(null, "No hay clases asignadas en " + dia + " - " + turno);
             return;
         }
-        String[] opciones = { "Ver", "Modificar", "Eliminar", "Cancelar" };
+        String[] opciones = { "Ver", "Eliminar", "Cancelar" };
         int sel = JOptionPane.showOptionDialog(null,
                 "Clase: " + clase.getNombre() + "\nEntrenador: "
                         + (clase.getEntrenador() != null ? clase.getEntrenador().getNombre() : "N/A") + "\nCupo: "
@@ -147,92 +147,6 @@ public class InterfazGimnasio {
             // Ver detalles de la clase
             JOptionPane.showMessageDialog(null, clase.toString(), "Detalle de clase", JOptionPane.INFORMATION_MESSAGE);
         } else if (sel == 1) {
-        } else if (sel == 1) {
-            // Modificar la clase (tipo, cupo y entrenador)
-            JComboBox<String> cmbTipo = new JComboBox<>(Gimnasio.TIPOS_CLASE);
-            cmbTipo.setSelectedItem(clase.getNombre());
-            JTextField txtCupo = new JTextField(String.valueOf(clase.getCupoMaximo()));
-            JComboBox<String> cmbEntrenador = new JComboBox<>();
-
-            JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
-            panel.add(new JLabel("Tipo de Clase:"));
-            panel.add(cmbTipo);
-            panel.add(new JLabel("Cupo Máximo:"));
-            panel.add(txtCupo);
-            panel.add(new JLabel("Entrenador:"));
-            panel.add(cmbEntrenador);
-
-            // Actualizar entrenadores
-            java.awt.event.ActionListener updateTrainers = e -> {
-                cmbEntrenador.removeAllItems();
-                String tipo = (String) cmbTipo.getSelectedItem();
-                for (Empleado emp : gimnasio.getEmpleados()) {
-                    if (emp instanceof Entrenador) {
-                        Entrenador ent = (Entrenador) emp;
-                        if (ent.getEspecialidad() != null && ent.getEspecialidad().equalsIgnoreCase(tipo)) {
-                            cmbEntrenador.addItem(ent.getDni() + " - " + ent.getNombre());
-                        }
-                    }
-                }
-                // Intentar seleccionar el actual si coincide
-                if (clase.getEntrenador() != null) {
-                    String actual = clase.getEntrenador().getDni() + " - " + clase.getEntrenador().getNombre();
-                    for (int i = 0; i < cmbEntrenador.getItemCount(); i++) {
-                        if (cmbEntrenador.getItemAt(i).equals(actual)) {
-                            cmbEntrenador.setSelectedIndex(i);
-                            break;
-                        }
-                    }
-                }
-            };
-            cmbTipo.addActionListener(updateTrainers);
-            updateTrainers.actionPerformed(null);
-
-            while (true) {
-                int result = JOptionPane.showConfirmDialog(null, panel, "Modificar Clase",
-                        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-                if (result == JOptionPane.OK_OPTION) {
-                    try {
-                        String nuevoTipo = (String) cmbTipo.getSelectedItem();
-                        String cupoTxt = txtCupo.getText().trim();
-                        String entSel = (String) cmbEntrenador.getSelectedItem();
-
-                        if (cupoTxt.isEmpty())
-                            throw new Exception("El cupo es obligatorio.");
-                        int nuevoCupo = Integer.parseInt(cupoTxt);
-                        if (nuevoCupo <= 0)
-                            throw new Exception("El cupo debe ser mayor a 0.");
-
-                        if (entSel == null)
-                            throw new Exception("Debe seleccionar un entrenador.");
-
-                        int dniEnt = Integer.parseInt(entSel.split(" - ")[0]);
-                        Entrenador nuevoEntrenador = (Entrenador) gimnasio.buscarEmpleadoPorDni(dniEnt);
-
-                        // Reasignar
-                        if (clase.getEntrenador() != null) {
-                            clase.getEntrenador().getClasesAsignadas().remove(clase);
-                        }
-                        clase.setNombre(nuevoTipo);
-                        clase.setCupoMaximo(nuevoCupo);
-                        clase.setEntrenador(nuevoEntrenador);
-                        nuevoEntrenador.asignarClase(clase);
-
-                        actualizarGrilla();
-                        gimnasio.registrarModificacionClase(clase);
-                        JOptionPane.showMessageDialog(null, "Clase modificada exitosamente.");
-                        break;
-                    } catch (NumberFormatException ex) {
-                        JOptionPane.showMessageDialog(null, "El cupo debe ser numérico.");
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage());
-                    }
-                } else {
-                    break;
-                }
-            }
-        } else if (sel == 2) {
             // Eliminar la clase
             int confirm = JOptionPane.showConfirmDialog(null, "¿Confirma eliminar la clase " + clase.getNombre() + "?",
                     "Eliminar clase", JOptionPane.YES_NO_OPTION);
@@ -242,7 +156,7 @@ public class InterfazGimnasio {
                 JOptionPane.showMessageDialog(null, "Clase eliminada.");
             }
         }
-        // sel == 3 (Cancelar) no hace nada
+        // sel == 2 (Cancelar) no hace nada
     }
 
     /**
@@ -454,9 +368,28 @@ public class InterfazGimnasio {
             JOptionPane.showMessageDialog(null, "No hay clases cargadas.");
             return;
         }
-        StringBuilder detalle = new StringBuilder("Clases:\n");
+        StringBuilder detalle = new StringBuilder("Clases disponibles:\n");
         for (Clase c : gimnasio.getClases()) {
-            detalle.append("- ").append(c.toString()).append("\n");
+            int cupoMaximo = c.getCupoMaximo();
+            int inscriptos = c.getSociosInscriptos().size();
+            Entrenador entrenador = c.getEntrenador();
+
+            detalle.append("Nombre: ")
+                    .append(c.getNombre())
+                    .append(" - Horario: ")
+                    .append(c.getHorario())
+                    .append(" - Cupo: ")
+                    .append(inscriptos)
+                    .append("/")
+                    .append(cupoMaximo)
+                    .append(" - Entrenador: ")
+                    .append(entrenador != null ? entrenador.getNombre() + " " + entrenador.getApellido()
+                            : "Sin asignar")
+                    .append(" - Especialidad: ")
+                    .append(entrenador != null && entrenador.getEspecialidad() != null
+                            ? entrenador.getEspecialidad()
+                            : "N/A")
+                    .append("\n");
         }
         JOptionPane.showMessageDialog(null, detalle.toString());
     }
@@ -495,12 +428,12 @@ public class InterfazGimnasio {
                     String dniStr = txtDni.getText().trim();
 
                     if (nombre.isEmpty() || apellido.isEmpty() || dniStr.isEmpty()) {
-                        throw new Exception("Todos los campos obligatorios deben completarse.");
+                        throw new ExcepcionDatosObligatorios("Todos los campos obligatorios deben completarse.");
                     }
 
                     int dni = Integer.parseInt(dniStr);
                     if (gimnasio.buscarSocioPorDni(dni) != null) {
-                        throw new Exception("Ya existe un socio con ese DNI.");
+                        throw new ExcepcionDatosObligatorios("Ya existe un socio con ese DNI.");
                     }
 
                     String membresia = (String) cmbMembresia.getSelectedItem();
@@ -521,6 +454,8 @@ public class InterfazGimnasio {
 
                 } catch (NumberFormatException e) {
                     JOptionPane.showMessageDialog(null, "Error: El DNI debe ser numérico.");
+                } catch (ExcepcionDatosObligatorios e) {
+                    JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
                 }
@@ -603,7 +538,7 @@ public class InterfazGimnasio {
                         String nombre = txtNombre.getText().trim();
                         String apellido = txtApellido.getText().trim();
                         if (nombre.isEmpty() || apellido.isEmpty()) {
-                            throw new Exception("Nombre y Apellido son obligatorios.");
+                            throw new ExcepcionDatosObligatorios("Nombre y Apellido son obligatorios.");
                         }
 
                         s.setNombre(nombre);
@@ -627,6 +562,8 @@ public class InterfazGimnasio {
                         gimnasio.registrarModificacionSocio(s);
                         JOptionPane.showMessageDialog(null, "Socio actualizado exitosamente.");
                         break;
+                    } catch (ExcepcionDatosObligatorios e) {
+                        JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
                     } catch (Exception e) {
                         JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
                     }
@@ -702,12 +639,12 @@ public class InterfazGimnasio {
                     String sueldoStr = txtSueldo.getText().trim();
 
                     if (nombre.isEmpty() || apellido.isEmpty() || dniStr.isEmpty() || sueldoStr.isEmpty()) {
-                        throw new Exception("Complete los campos obligatorios.");
+                        throw new ExcepcionDatosObligatorios("Complete los campos obligatorios.");
                     }
 
                     int dni = Integer.parseInt(dniStr);
                     if (gimnasio.buscarEmpleadoPorDni(dni) != null) {
-                        throw new Exception("Ya existe un empleado con ese DNI.");
+                        throw new ExcepcionDatosObligatorios("Ya existe un empleado con ese DNI.");
                     }
 
                     double sueldo = Double.parseDouble(sueldoStr);
@@ -723,7 +660,7 @@ public class InterfazGimnasio {
                         String horario = txtHorario.getText().trim();
                         String sector = txtSector.getText().trim();
                         if (horario.isEmpty() || sector.isEmpty()) {
-                            throw new Exception("Para Limpieza, Horario y Sector son obligatorios.");
+                            throw new ExcepcionDatosObligatorios("Para Limpieza, Horario y Sector son obligatorios.");
                         }
                         Limpieza limp = new Limpieza(nombre, apellido, dni, sexo, new java.util.Date(), sueldo, horario,
                                 sector);
@@ -735,6 +672,8 @@ public class InterfazGimnasio {
 
                 } catch (NumberFormatException e) {
                     JOptionPane.showMessageDialog(null, "Error: DNI y Sueldo deben ser numéricos.");
+                } catch (ExcepcionDatosObligatorios e) {
+                    JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
                 }
@@ -842,7 +781,7 @@ public class InterfazGimnasio {
                         String sueldoStr = txtSueldo.getText().trim();
 
                         if (nombre.isEmpty() || apellido.isEmpty() || sueldoStr.isEmpty()) {
-                            throw new Exception("Complete los campos obligatorios.");
+                            throw new ExcepcionDatosObligatorios("Complete los campos obligatorios.");
                         }
 
                         e.setNombre(nombre);
@@ -856,7 +795,7 @@ public class InterfazGimnasio {
                             String horario = txtHorario.getText().trim();
                             String sector = txtSector.getText().trim();
                             if (horario.isEmpty() || sector.isEmpty())
-                                throw new Exception("Horario y Sector son obligatorios.");
+                                throw new ExcepcionDatosObligatorios("Horario y Sector son obligatorios.");
                             ((Limpieza) e).setHorarioTrabajo(horario);
                             ((Limpieza) e).setSector(sector);
                         }
@@ -866,6 +805,8 @@ public class InterfazGimnasio {
                         break;
                     } catch (NumberFormatException ex) {
                         JOptionPane.showMessageDialog(null, "El sueldo debe ser numérico.");
+                    } catch (ExcepcionDatosObligatorios ex) {
+                        JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage());
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage());
                     }
@@ -930,17 +871,17 @@ public class InterfazGimnasio {
                     String entSel = (String) cmbEntrenador.getSelectedItem();
 
                     if (cupoStr.isEmpty())
-                        throw new Exception("El cupo es obligatorio.");
+                        throw new ExcepcionDatosObligatorios("El cupo es obligatorio.");
                     int cupo = Integer.parseInt(cupoStr);
                     if (cupo <= 0)
-                        throw new Exception("El cupo debe ser mayor a 0.");
+                        throw new ExcepcionDatosObligatorios("El cupo debe ser mayor a 0.");
 
                     if (gimnasio.getClaseEnHorario(dia, turno) != null) {
-                        throw new Exception("Ya existe una clase en ese horario.");
+                        throw new ExcepcionDatosObligatorios("Ya existe una clase en ese horario.");
                     }
 
                     if (entSel == null) {
-                        throw new Exception(
+                        throw new ExcepcionDatosObligatorios(
                                 "Debe seleccionar un entrenador. Si no hay, agregue uno con esa especialidad primero.");
                     }
 
@@ -957,6 +898,8 @@ public class InterfazGimnasio {
 
                 } catch (NumberFormatException e) {
                     JOptionPane.showMessageDialog(null, "Error: El cupo debe ser numérico.");
+                } catch (ExcepcionDatosObligatorios e) {
+                    JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
                 }

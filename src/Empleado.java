@@ -1,4 +1,3 @@
-import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -22,22 +21,6 @@ public abstract class Empleado {
         this.sexo = sexo;
         this.fechaNacimiento = fechaNacimiento;
         this.sueldo = sueldo;
-    }
-
-    public int calcularEdad() {
-        if (fechaNacimiento == null)
-            return 0;
-
-        Calendar hoy = Calendar.getInstance();
-        Calendar fnac = Calendar.getInstance();
-        fnac.setTime(fechaNacimiento);
-
-        int edad = hoy.get(Calendar.YEAR) - fnac.get(Calendar.YEAR);
-
-        if (hoy.get(Calendar.DAY_OF_YEAR) < fnac.get(Calendar.DAY_OF_YEAR)) {
-            edad--;
-        }
-        return edad;
     }
 
     /**

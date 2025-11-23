@@ -30,22 +30,6 @@ public class Clase {
         this.sociosInscriptos = new ArrayList<>();
     }
 
-    public boolean agregarSocio(Socio s) {
-        if (s == null) {
-            return false;
-        }
-
-        if (sociosInscriptos.size() < cupoMaximo && !sociosInscriptos.contains(s)) {
-            sociosInscriptos.add(s);
-            return true;
-        }
-        return false;
-    }
-
-    public boolean eliminarSocio(Socio s) {
-        return sociosInscriptos.remove(s);
-    }
-
     public void agregarAlGimnasio(Gimnasio g) {
         if (g != null && !g.clasesPorHorario.containsKey(this.getHorario())) {
             g.clases.add(this);
